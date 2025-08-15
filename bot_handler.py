@@ -261,6 +261,12 @@ class BotHandler:
     
     async def add_channel_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Add specified channel to protected channels list"""
+        self.bot_logger.log_action(
+            action="add_channel_command_called",
+            user_id=update.effective_user.id if update.effective_user else None,
+            admin_id=update.effective_user.id if update.effective_user else None
+        )
+        
         if not update.effective_user or not update.message:
             return
             
