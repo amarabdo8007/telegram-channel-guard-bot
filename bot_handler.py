@@ -349,20 +349,56 @@ class BotHandler:
         await query.answer()
         
         if query.data == "add_channel":
-            # Show instructions for adding channel
-            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            # Show instructions and wait for channel ID input
+            keyboard = [
+                [InlineKeyboardButton("📝 إدخال ID القناة", callback_data="input_channel_id")],
+                [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
+            ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             message = self.messages.get_message("add_channel_instructions")
             await query.edit_message_text(message, reply_markup=reply_markup)
+            
+        elif query.data == "input_channel_id":
+            # Ask user to send channel ID
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.edit_message_text(
+                "🆔 أرسل ID القناة الآن:\n\n"
+                "مثال: -1001234567890\n\n"
+                "ملاحظة: أرسل ID القناة كرسالة منفصلة (ليس كرد على هذه الرسالة)",
+                reply_markup=reply_markup
+            )
+            
+            # Store that we're waiting for channel ID from this user
+            context.user_data['waiting_for'] = 'channel_id'
                 
         elif query.data == "add_admin":
-            # Show instructions for adding admin
-            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            # Show instructions and wait for admin ID input
+            keyboard = [
+                [InlineKeyboardButton("📝 إدخال ID المشرف", callback_data="input_admin_id")],
+                [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
+            ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             message = self.messages.get_message("add_admin_instructions")
             await query.edit_message_text(message, reply_markup=reply_markup)
+            
+        elif query.data == "input_admin_id":
+            # Ask user to send admin ID
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.edit_message_text(
+                "🆔 أرسل ID المشرف الآن:\n\n"
+                "مثال: 123456789\n\n"
+                "ملاحظة: أرسل ID المشرف كرسالة منفصلة (ليس كرد على هذه الرسالة)",
+                reply_markup=reply_markup
+            )
+            
+            # Store that we're waiting for admin ID from this user
+            context.user_data['waiting_for'] = 'admin_id'
             
         elif query.data == "list_admins":
             # Show list of monitored admins
@@ -540,3 +576,122 @@ class BotHandler:
             return chat_member.status == 'creator'
         except:
             return False
+    
+    async def handle_text_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle text messages for ID input"""
+        if not update.message or not update.message.text or not update.effective_user:
+            return
+            
+        user_id = update.effective_user.id
+        text = update.message.text.strip()
+        
+        # Check if we're waiting for input from this user
+        waiting_for = context.user_data.get('waiting_for')
+        
+        if waiting_for == 'channel_id':
+            await self.handle_channel_id_input(update, context, text)
+        elif waiting_for == 'admin_id':
+            await self.handle_admin_id_input(update, context, text)
+    
+    async def handle_channel_id_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE, channel_id_text: str):
+        """Handle channel ID input"""
+        user = update.effective_user
+        
+        try:
+            channel_id = int(channel_id_text)
+        except ValueError:
+            await update.message.reply_text(
+                "❌ معرف القناة غير صحيح\n"
+                "يجب أن يكون رقم صحيح مثل: -1001234567890"
+            )
+            return
+        
+        try:
+            # Check if user is member of the channel and get their status
+            member = await context.bot.get_chat_member(channel_id, user.id)
+            if member.status not in ['creator', 'administrator']:
+                await update.message.reply_text(
+                    "❌ يجب أن تكون مالك القناة أو مشرف لإضافتها للحماية"
+                )
+                return
+                
+            # Get channel info
+            channel_info = await context.bot.get_chat(channel_id)
+            channel_title = channel_info.title or f"Channel {channel_id}"
+            
+        except Exception as e:
+            await update.message.reply_text(
+                f"❌ فشل في الوصول للقناة {channel_id}\n"
+                "تأكد من:\n"
+                "• صحة معرف القناة\n"
+                "• إضافة البوت كمشرف في القناة\n"
+                "• منح البوت الصلاحيات المطلوبة"
+            )
+            context.user_data.pop('waiting_for', None)
+            return
+        
+        # Add channel to protected list if not already there
+        if channel_id not in self.config["channel_settings"]["protected_channels"]:
+            self.config["channel_settings"]["protected_channels"].append(channel_id)
+            self.save_config()
+            
+            self.bot_logger.log_action(
+                action="channel_added_to_protection",
+                chat_id=channel_id,
+                admin_id=user.id,
+                admin_username=user.username
+            )
+            
+            await update.message.reply_text(
+                f"✅ تم إضافة القناة {channel_title} إلى قائمة الحماية بنجاح!\n"
+                f"🆔 معرف القناة: {channel_id}\n\n"
+                "البوت الآن سيراقب أنشطة المشرفين المحددين في هذه القناة."
+            )
+        else:
+            await update.message.reply_text(f"⚠️ القناة {channel_title} محمية بالفعل!")
+            
+        # Clear the waiting state
+        context.user_data.pop('waiting_for', None)
+    
+    async def handle_admin_id_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id_text: str):
+        """Handle admin ID input"""
+        user = update.effective_user
+        
+        try:
+            admin_id = int(admin_id_text)
+        except ValueError:
+            await update.message.reply_text(
+                "❌ معرف المشرف غير صحيح\n"
+                "يجب أن يكون رقم صحيح مثل: 123456789"
+            )
+            return
+            
+        # Check if user has any protected channels
+        if not self.config["channel_settings"]["protected_channels"]:
+            await update.message.reply_text(
+                "❌ يجب إضافة قناة للحماية أولاً قبل إضافة المشرفين"
+            )
+            context.user_data.pop('waiting_for', None)
+            return
+        
+        # Add admin to monitored list
+        if admin_id not in self.config["channel_settings"]["monitored_admins"]:
+            self.config["channel_settings"]["monitored_admins"].append(admin_id)
+            self.save_config()
+            
+            self.bot_logger.log_action(
+                action="admin_added_to_monitor",
+                user_id=admin_id,
+                admin_id=user.id,
+                admin_username=user.username
+            )
+            
+            await update.message.reply_text(
+                f"✅ تم إضافة المشرف {admin_id} إلى قائمة المراقبة بنجاح!\n\n"
+                "البوت سيراقب أنشطة هذا المشرف في جميع القنوات المحمية."
+            )
+        else:
+            await update.message.reply_text(f"⚠️ المشرف {admin_id} موجود بالفعل في قائمة المراقبة!")
+            
+        # Clear the waiting state
+        context.user_data.pop('waiting_for', None)

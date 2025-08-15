@@ -7,7 +7,7 @@ Main entry point for the bot application
 import os
 import asyncio
 import logging
-from telegram.ext import Application, CommandHandler, ChatMemberHandler, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, ChatMemberHandler, CallbackQueryHandler, MessageHandler, filters
 from bot_handler import BotHandler
 from logger import setup_logging
 
@@ -44,6 +44,9 @@ def main():
     
     # Add callback query handler for inline buttons
     application.add_handler(CallbackQueryHandler(bot_handler.button_callback))
+    
+    # Add message handler for text messages (for ID input)
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, bot_handler.handle_text_message))
     
     # Add chat member handler to monitor admin changes
     application.add_handler(ChatMemberHandler(bot_handler.chat_member_update, ChatMemberHandler.CHAT_MEMBER))
