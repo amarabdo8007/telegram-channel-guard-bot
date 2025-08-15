@@ -1,17 +1,21 @@
 {
-    "bot_settings": {
-        "language": "ar",
-        "log_level": "INFO",
-        "max_log_entries": 1000
-    },
-    "channel_settings": {
-        "protected_channels": [],
-        "monitored_admins": [],
-        "auto_ban_enabled": true,
-        "notification_enabled": true
-    },
-    "rate_limits": {
-        "api_calls_per_minute": 30,
-        "ban_actions_per_hour": 10
-    }
+  "bot_settings": {
+    "language": "ar",
+    "log_level": "INFO",
+    "max_log_entries": 1000
+  },
+  "channel_settings": {
+    "protected_channels": [
+      -1002354690770
+    ],
+    "monitored_admins": [
+      6195301672
+    ],
+    "auto_ban_enabled": true,
+    "notification_enabled": true
+  },
+  "rate_limits": {
+    "api_calls_per_minute": 30,
+    "ban_actions_per_hour": 10
+  }
 }

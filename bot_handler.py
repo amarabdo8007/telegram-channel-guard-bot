@@ -65,8 +65,7 @@ class BotHandler:
                 InlineKeyboardButton("🛡️ إضافة قناة للحماية", callback_data="add_channel")
             ],
             [
-                InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin"),
-                InlineKeyboardButton("📝 عرض المشرفين", callback_data="list_admins")
+                InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin")
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -400,45 +399,7 @@ class BotHandler:
             # Store that we're waiting for admin ID from this user
             context.user_data['waiting_for'] = 'admin_id'
             
-        elif query.data == "list_admins":
-            # Show list of monitored admins
-            if not query.from_user or not query.message or not query.message.chat:
-                return
-                
-            user = query.from_user
-            chat = query.message.chat
-            
-            if not await self.is_authorized_user(user.id, chat.id, context):
-                await query.edit_message_text(self.messages.get_message("unauthorized"))
-                return
-            
-            monitored_admins = self.config["channel_settings"]["monitored_admins"]
-            
-            if not monitored_admins:
-                await query.edit_message_text(self.messages.get_message("no_monitored_admins"))
-                return
-            
-            # Get detailed info about monitored admins
-            admin_details = []
-            for admin_id in monitored_admins:
-                try:
-                    member = await context.bot.get_chat_member(chat.id, admin_id)
-                    admin_info = {
-                        'id': admin_id,
-                        'username': member.user.username,
-                        'first_name': member.user.first_name,
-                        'status': member.status
-                    }
-                    admin_details.append(admin_info)
-                except:
-                    admin_details.append({'id': admin_id, 'username': None, 'first_name': 'Unknown', 'status': 'unknown'})
-            
-            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            message = self.messages.get_monitored_admins_message(admin_details)
-            await query.edit_message_text(message, reply_markup=reply_markup)
-            
+
         elif query.data == "main_menu":
             # Show main menu
             keyboard = [
@@ -446,8 +407,7 @@ class BotHandler:
                     InlineKeyboardButton("🛡️ إضافة قناة للحماية", callback_data="add_channel")
                 ],
                 [
-                    InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin"),
-                    InlineKeyboardButton("📝 عرض المشرفين", callback_data="list_admins")
+                    InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin")
                 ]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -686,9 +646,17 @@ class BotHandler:
                 admin_username=user.username
             )
             
+            # Get list of protected channels for display
+            protected_channels = self.config["channel_settings"]["protected_channels"]
+            channels_text = ""
+            if protected_channels:
+                channels_text = f"\n\n🛡️ القنوات المحمية حالياً: {len(protected_channels)} قناة"
+            
             await update.message.reply_text(
-                f"✅ تم إضافة المشرف {admin_id} إلى قائمة المراقبة بنجاح!\n\n"
-                "البوت سيراقب أنشطة هذا المشرف في جميع القنوات المحمية."
+                f"✅ تم إضافة المشرف {admin_id} إلى قائمة المراقبة بنجاح!"
+                f"{channels_text}\n\n"
+                "📍 البوت سيراقب أنشطة هذا المشرف في جميع القنوات المحمية.\n"
+                "⚠️ إذا قام هذا المشرف بحظر أعضاء عاديين، سيتم إزالته تلقائياً من القناة."
             )
         else:
             await update.message.reply_text(f"⚠️ المشرف {admin_id} موجود بالفعل في قائمة المراقبة!")
