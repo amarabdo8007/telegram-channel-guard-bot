@@ -400,6 +400,56 @@ class BotHandler:
             context.user_data['waiting_for'] = 'admin_id'
             
 
+        elif query.data.startswith("remove_channel_"):
+            # Handle channel removal
+            channel_id = int(query.data.replace("remove_channel_", ""))
+            
+            if channel_id in self.config["channel_settings"]["protected_channels"]:
+                self.config["channel_settings"]["protected_channels"].remove(channel_id)
+                self.save_config()
+                
+                self.bot_logger.log_action(
+                    action="channel_removed_from_protection",
+                    chat_id=channel_id,
+                    admin_id=query.from_user.id if query.from_user else None,
+                    admin_username=query.from_user.username if query.from_user else None
+                )
+                
+                keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await query.edit_message_text(
+                    f"✅ تم حذف القناة {channel_id} من قائمة الحماية بنجاح!",
+                    reply_markup=reply_markup
+                )
+            else:
+                await query.edit_message_text("❌ القناة غير موجودة في قائمة الحماية!")
+                
+        elif query.data.startswith("remove_admin_"):
+            # Handle admin removal
+            admin_id = int(query.data.replace("remove_admin_", ""))
+            
+            if admin_id in self.config["channel_settings"]["monitored_admins"]:
+                self.config["channel_settings"]["monitored_admins"].remove(admin_id)
+                self.save_config()
+                
+                self.bot_logger.log_action(
+                    action="admin_removed_from_monitor",
+                    user_id=admin_id,
+                    admin_id=query.from_user.id if query.from_user else None,
+                    admin_username=query.from_user.username if query.from_user else None
+                )
+                
+                keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await query.edit_message_text(
+                    f"✅ تم حذف المشرف {admin_id} من قائمة المراقبة بنجاح!",
+                    reply_markup=reply_markup
+                )
+            else:
+                await query.edit_message_text("❌ المشرف غير موجود في قائمة المراقبة!")
+                
         elif query.data == "main_menu":
             # Show main menu
             keyboard = [
@@ -602,10 +652,18 @@ class BotHandler:
                 admin_username=user.username
             )
             
+            # Create inline keyboard with remove option
+            keyboard = [
+                [InlineKeyboardButton(f"🗑️ إزالة القناة {channel_title}", callback_data=f"remove_channel_{channel_id}")],
+                [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
             await update.message.reply_text(
                 f"✅ تم إضافة القناة {channel_title} إلى قائمة الحماية بنجاح!\n"
                 f"🆔 معرف القناة: {channel_id}\n\n"
-                "البوت الآن سيراقب أنشطة المشرفين المحددين في هذه القناة."
+                "البوت الآن سيراقب أنشطة المشرفين المحددين في هذه القناة.",
+                reply_markup=reply_markup
             )
         else:
             await update.message.reply_text(f"⚠️ القناة {channel_title} محمية بالفعل!")
@@ -646,17 +704,32 @@ class BotHandler:
                 admin_username=user.username
             )
             
+            # Get admin info to display
+            try:
+                admin_info = await context.bot.get_chat(admin_id)
+                admin_name = admin_info.first_name or f"Admin {admin_id}"
+            except:
+                admin_name = f"Admin {admin_id}"
+            
             # Get list of protected channels for display
             protected_channels = self.config["channel_settings"]["protected_channels"]
             channels_text = ""
             if protected_channels:
                 channels_text = f"\n\n🛡️ القنوات المحمية حالياً: {len(protected_channels)} قناة"
             
+            # Create inline keyboard with remove option
+            keyboard = [
+                [InlineKeyboardButton(f"🗑️ إزالة المشرف {admin_name}", callback_data=f"remove_admin_{admin_id}")],
+                [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
             await update.message.reply_text(
-                f"✅ تم إضافة المشرف {admin_id} إلى قائمة المراقبة بنجاح!"
+                f"✅ تم إضافة المشرف {admin_name} إلى قائمة المراقبة بنجاح!"
                 f"{channels_text}\n\n"
                 "📍 البوت سيراقب أنشطة هذا المشرف في جميع القنوات المحمية.\n"
-                "⚠️ إذا قام هذا المشرف بحظر أعضاء عاديين، سيتم إزالته تلقائياً من القناة."
+                "⚠️ إذا قام هذا المشرف بحظر أعضاء عاديين، سيتم إزالته تلقائياً من القناة.",
+                reply_markup=reply_markup
             )
         else:
             await update.message.reply_text(f"⚠️ المشرف {admin_id} موجود بالفعل في قائمة المراقبة!")
