@@ -40,6 +40,8 @@ def main():
     application.add_handler(CommandHandler("list_admins", bot_handler.list_admins_command))
     application.add_handler(CommandHandler("add_channel", bot_handler.add_channel_command))
     
+    logger.info("Command handlers added: start, help, status, logs, config, add_admin, remove_admin, list_admins, add_channel")
+    
     # Add callback query handler for inline buttons
     application.add_handler(CallbackQueryHandler(bot_handler.button_callback))
     

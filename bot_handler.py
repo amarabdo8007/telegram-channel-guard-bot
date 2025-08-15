@@ -139,6 +139,12 @@ class BotHandler:
     
     async def add_admin_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Add an admin to the monitored list"""
+        self.bot_logger.log_action(
+            action="add_admin_command_called",
+            user_id=update.effective_user.id if update.effective_user else None,
+            admin_id=update.effective_user.id if update.effective_user else None
+        )
+        
         if not update.effective_user or not update.effective_chat or not update.message:
             return
             
