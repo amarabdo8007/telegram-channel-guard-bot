@@ -1,0 +1,74 @@
+# Overview
+
+This is a Telegram Channel Protection Bot built with Python that monitors admin activities in Telegram channels and automatically removes/bans admins who abuse their privileges by banning regular members. The bot provides comprehensive logging, configuration management, and real-time monitoring capabilities with Arabic language support.
+
+# User Preferences
+
+Preferred communication style: Simple, everyday language.
+Language: Arabic - All bot messages and responses in Arabic.
+
+# System Architecture
+
+## Core Design Pattern
+The application follows a modular architecture with clear separation of concerns:
+
+- **BotHandler**: Central command processor that coordinates all bot operations
+- **ChannelMonitor**: Event monitoring and status change detection
+- **AdminManager**: Admin privilege management and enforcement actions
+- **BotLogger**: Comprehensive logging system with file rotation
+- **Messages**: Internationalization support (currently Arabic)
+
+## Bot Framework Integration
+Uses python-telegram-bot library for Telegram API integration with:
+- Command handlers for user interactions (/start, /help, /status, /logs, /config, /add_admin, /remove_admin, /list_admins)
+- ChatMemberHandler for real-time monitoring of admin actions
+- Polling-based update mechanism for continuous operation
+- Admin management commands restricted to channel owners/creators
+
+## Configuration Management
+JSON-based configuration system (config.json) managing:
+- Bot settings (language, logging levels)
+- Channel protection settings (auto-ban, notifications)
+- Rate limiting parameters for API calls and actions
+
+## Logging Architecture
+Multi-tier logging system:
+- Standard Python logging with rotating file handlers (10MB files, 5 backups)
+- JSONL format action logging for structured event tracking
+- UTF-8 encoding support for Arabic text
+- In-memory event storage with automatic cleanup (1000 recent events)
+
+## Event Processing Pipeline
+1. ChatMemberHandler detects member status changes
+2. ChannelMonitor analyzes if change represents admin abuse
+3. AdminManager executes removal/ban procedures if needed
+4. BotLogger records all actions for audit trail
+
+## Error Handling Strategy
+Defensive programming approach with:
+- Try-catch blocks around all Telegram API calls
+- Graceful degradation when config files are missing
+- Comprehensive error logging for debugging
+
+# External Dependencies
+
+## Telegram Bot API
+- **python-telegram-bot**: Primary framework for Telegram integration
+- **Environment Variable**: TELEGRAM_BOT_TOKEN required for authentication
+
+## Python Standard Library
+- **logging**: Multi-level logging with file rotation
+- **json**: Configuration and structured log management
+- **datetime**: Timestamp generation and event tracking
+- **os**: Environment variable access and file system operations
+- **asyncio**: Asynchronous operation support
+
+## File System Dependencies
+- **logs/**: Directory for log file storage with automatic creation
+- **config.json**: Runtime configuration persistence
+- **logs/bot.log**: Application log files with rotation
+- **logs/actions.jsonl**: Structured action logging in JSONL format
+
+## Language Support
+- **UTF-8 encoding**: Full Arabic language support throughout the application
+- **Internationalization ready**: Modular message system for easy language expansion
