@@ -67,14 +67,6 @@ class BotHandler:
             [
                 InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin"),
                 InlineKeyboardButton("📝 عرض المشرفين", callback_data="list_admins")
-            ],
-            [
-                InlineKeyboardButton("📊 حالة البوت", callback_data="status"),
-                InlineKeyboardButton("📋 المساعدة", callback_data="help")
-            ],
-            [
-                InlineKeyboardButton("📋 السجلات", callback_data="logs"),
-                InlineKeyboardButton("⚙️ الإعدادات", callback_data="config")
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -349,39 +341,6 @@ class BotHandler:
             message = self.messages.get_message("add_admin_instructions")
             await query.edit_message_text(message, reply_markup=reply_markup)
             
-        elif query.data == "status":
-            # Show bot status
-            if not query.from_user or not query.message or not query.message.chat:
-                return
-                
-            user = query.from_user
-            chat = query.message.chat
-            
-            if not await self.is_authorized_user(user.id, chat.id, context):
-                await query.edit_message_text(self.messages.get_message("unauthorized"))
-                return
-            
-            status_info = {
-                "protected_channels": len(self.config["channel_settings"]["protected_channels"]),
-                "monitored_admins": len(self.config["channel_settings"]["monitored_admins"]),
-                "auto_ban_enabled": self.config["channel_settings"]["auto_ban_enabled"],
-                "bot_active": True
-            }
-            
-            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            status_message = self.messages.get_status_message(status_info)
-            await query.edit_message_text(status_message, reply_markup=reply_markup)
-            
-        elif query.data == "help":
-            # Show help message
-            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            help_message = self.messages.get_message("help")
-            await query.edit_message_text(help_message, reply_markup=reply_markup)
-            
         elif query.data == "list_admins":
             # Show list of monitored admins
             if not query.from_user or not query.message or not query.message.chat:
@@ -421,43 +380,6 @@ class BotHandler:
             message = self.messages.get_monitored_admins_message(admin_details)
             await query.edit_message_text(message, reply_markup=reply_markup)
             
-        elif query.data == "logs":
-            # Show recent logs
-            if not query.from_user or not query.message or not query.message.chat:
-                return
-                
-            user = query.from_user
-            chat = query.message.chat
-            
-            if not await self.is_authorized_user(user.id, chat.id, context):
-                await query.edit_message_text(self.messages.get_message("unauthorized"))
-                return
-            
-            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            recent_logs = self.bot_logger.get_recent_logs(limit=10)
-            logs_message = self.messages.get_logs_message(recent_logs)
-            await query.edit_message_text(logs_message, reply_markup=reply_markup)
-            
-        elif query.data == "config":
-            # Show configuration
-            if not query.from_user or not query.message or not query.message.chat:
-                return
-                
-            user = query.from_user
-            chat = query.message.chat
-            
-            if not await self.is_authorized_user(user.id, chat.id, context):
-                await query.edit_message_text(self.messages.get_message("unauthorized"))
-                return
-            
-            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            config_message = self.messages.get_config_message(self.config)
-            await query.edit_message_text(config_message, reply_markup=reply_markup)
-            
         elif query.data == "main_menu":
             # Show main menu
             keyboard = [
@@ -467,14 +389,6 @@ class BotHandler:
                 [
                     InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin"),
                     InlineKeyboardButton("📝 عرض المشرفين", callback_data="list_admins")
-                ],
-                [
-                    InlineKeyboardButton("📊 حالة البوت", callback_data="status"),
-                    InlineKeyboardButton("📋 المساعدة", callback_data="help")
-                ],
-                [
-                    InlineKeyboardButton("📋 السجلات", callback_data="logs"),
-                    InlineKeyboardButton("⚙️ الإعدادات", callback_data="config")
                 ]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
