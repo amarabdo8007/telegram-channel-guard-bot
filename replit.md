@@ -20,8 +20,10 @@ The application follows a modular architecture with clear separation of concerns
 
 ## Bot Framework Integration
 Uses python-telegram-bot library for Telegram API integration with:
-- Command handlers for user interactions (/start, /help, /status, /logs, /config, /add_admin, /remove_admin, /list_admins)
+- Command handlers for user interactions (/start, /help, /status, /logs, /config, /add_admin, /remove_admin, /list_admins, /add_channel)
 - ChatMemberHandler for real-time monitoring of admin actions
+- CallbackQueryHandler for interactive button functionality
+- Inline keyboard interface with intuitive navigation buttons
 - Polling-based update mechanism for continuous operation
 - Admin management commands restricted to channel owners/creators
 

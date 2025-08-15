@@ -6,8 +6,8 @@ Handles all bot commands and chat member updates
 import json
 import logging
 from datetime import datetime
-from telegram import Update
-from telegram.ext import ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes, CallbackQueryHandler
 from channel_monitor import ChannelMonitor
 from admin_manager import AdminManager
 from messages import Messages
@@ -58,7 +58,28 @@ class BotHandler:
         )
         
         welcome_message = self.messages.get_message("welcome")
-        await update.message.reply_text(welcome_message)
+        
+        # Create inline keyboard with buttons
+        keyboard = [
+            [
+                InlineKeyboardButton("🛡️ إضافة قناة للحماية", callback_data="add_channel")
+            ],
+            [
+                InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin"),
+                InlineKeyboardButton("📝 عرض المشرفين", callback_data="list_admins")
+            ],
+            [
+                InlineKeyboardButton("📊 حالة البوت", callback_data="status"),
+                InlineKeyboardButton("📋 المساعدة", callback_data="help")
+            ],
+            [
+                InlineKeyboardButton("📋 السجلات", callback_data="logs"),
+                InlineKeyboardButton("⚙️ الإعدادات", callback_data="config")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(welcome_message, reply_markup=reply_markup)
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command"""
@@ -245,6 +266,221 @@ class BotHandler:
         
         message = self.messages.get_monitored_admins_message(admin_details)
         await update.message.reply_text(message)
+    
+    async def add_channel_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Add current channel to protected channels list"""
+        if not update.effective_user or not update.effective_chat or not update.message:
+            return
+            
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        # Check if user is channel creator
+        if not await self.is_channel_creator(user.id, chat.id, context):
+            await update.message.reply_text(self.messages.get_message("only_creator_allowed"))
+            return
+        
+        # Add channel to protected list if not already there
+        if chat.id not in self.config["channel_settings"]["protected_channels"]:
+            self.config["channel_settings"]["protected_channels"].append(chat.id)
+            self.save_config()
+            
+            self.bot_logger.log_action(
+                action="channel_added_to_protection",
+                chat_id=chat.id,
+                admin_id=user.id,
+                admin_username=user.username
+            )
+            
+            await update.message.reply_text(self.messages.get_message("channel_added_success"))
+        else:
+            await update.message.reply_text(self.messages.get_message("channel_already_protected"))
+    
+    async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle inline keyboard button presses"""
+        query = update.callback_query
+        if not query:
+            return
+            
+        await query.answer()
+        
+        if query.data == "add_channel":
+            # Show instructions for adding channel
+            keyboard = [[InlineKeyboardButton("✅ إضافة هذه القناة", callback_data="confirm_add_channel")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            message = self.messages.get_message("add_channel_instructions")
+            await query.edit_message_text(message, reply_markup=reply_markup)
+            
+        elif query.data == "confirm_add_channel":
+            # Add current channel to protection
+            if not query.from_user or not query.message or not query.message.chat:
+                return
+                
+            user = query.from_user
+            chat = query.message.chat
+            
+            # Check if user is channel creator
+            if not await self.is_channel_creator(user.id, chat.id, context):
+                await query.edit_message_text(self.messages.get_message("only_creator_allowed"))
+                return
+            
+            # Add channel to protected list
+            if chat.id not in self.config["channel_settings"]["protected_channels"]:
+                self.config["channel_settings"]["protected_channels"].append(chat.id)
+                self.save_config()
+                
+                self.bot_logger.log_action(
+                    action="channel_added_to_protection",
+                    chat_id=chat.id,
+                    admin_id=user.id,
+                    admin_username=user.username
+                )
+                
+                await query.edit_message_text(self.messages.get_message("channel_added_success"))
+            else:
+                await query.edit_message_text(self.messages.get_message("channel_already_protected"))
+                
+        elif query.data == "add_admin":
+            # Show instructions for adding admin
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            message = self.messages.get_message("add_admin_instructions")
+            await query.edit_message_text(message, reply_markup=reply_markup)
+            
+        elif query.data == "status":
+            # Show bot status
+            if not query.from_user or not query.message or not query.message.chat:
+                return
+                
+            user = query.from_user
+            chat = query.message.chat
+            
+            if not await self.is_authorized_user(user.id, chat.id, context):
+                await query.edit_message_text(self.messages.get_message("unauthorized"))
+                return
+            
+            status_info = {
+                "protected_channels": len(self.config["channel_settings"]["protected_channels"]),
+                "monitored_admins": len(self.config["channel_settings"]["monitored_admins"]),
+                "auto_ban_enabled": self.config["channel_settings"]["auto_ban_enabled"],
+                "bot_active": True
+            }
+            
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            status_message = self.messages.get_status_message(status_info)
+            await query.edit_message_text(status_message, reply_markup=reply_markup)
+            
+        elif query.data == "help":
+            # Show help message
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            help_message = self.messages.get_message("help")
+            await query.edit_message_text(help_message, reply_markup=reply_markup)
+            
+        elif query.data == "list_admins":
+            # Show list of monitored admins
+            if not query.from_user or not query.message or not query.message.chat:
+                return
+                
+            user = query.from_user
+            chat = query.message.chat
+            
+            if not await self.is_authorized_user(user.id, chat.id, context):
+                await query.edit_message_text(self.messages.get_message("unauthorized"))
+                return
+            
+            monitored_admins = self.config["channel_settings"]["monitored_admins"]
+            
+            if not monitored_admins:
+                await query.edit_message_text(self.messages.get_message("no_monitored_admins"))
+                return
+            
+            # Get detailed info about monitored admins
+            admin_details = []
+            for admin_id in monitored_admins:
+                try:
+                    member = await context.bot.get_chat_member(chat.id, admin_id)
+                    admin_info = {
+                        'id': admin_id,
+                        'username': member.user.username,
+                        'first_name': member.user.first_name,
+                        'status': member.status
+                    }
+                    admin_details.append(admin_info)
+                except:
+                    admin_details.append({'id': admin_id, 'username': None, 'first_name': 'Unknown', 'status': 'unknown'})
+            
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            message = self.messages.get_monitored_admins_message(admin_details)
+            await query.edit_message_text(message, reply_markup=reply_markup)
+            
+        elif query.data == "logs":
+            # Show recent logs
+            if not query.from_user or not query.message or not query.message.chat:
+                return
+                
+            user = query.from_user
+            chat = query.message.chat
+            
+            if not await self.is_authorized_user(user.id, chat.id, context):
+                await query.edit_message_text(self.messages.get_message("unauthorized"))
+                return
+            
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            recent_logs = self.bot_logger.get_recent_logs(limit=10)
+            logs_message = self.messages.get_logs_message(recent_logs)
+            await query.edit_message_text(logs_message, reply_markup=reply_markup)
+            
+        elif query.data == "config":
+            # Show configuration
+            if not query.from_user or not query.message or not query.message.chat:
+                return
+                
+            user = query.from_user
+            chat = query.message.chat
+            
+            if not await self.is_authorized_user(user.id, chat.id, context):
+                await query.edit_message_text(self.messages.get_message("unauthorized"))
+                return
+            
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            config_message = self.messages.get_config_message(self.config)
+            await query.edit_message_text(config_message, reply_markup=reply_markup)
+            
+        elif query.data == "main_menu":
+            # Show main menu
+            keyboard = [
+                [
+                    InlineKeyboardButton("🛡️ إضافة قناة للحماية", callback_data="add_channel")
+                ],
+                [
+                    InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin"),
+                    InlineKeyboardButton("📝 عرض المشرفين", callback_data="list_admins")
+                ],
+                [
+                    InlineKeyboardButton("📊 حالة البوت", callback_data="status"),
+                    InlineKeyboardButton("📋 المساعدة", callback_data="help")
+                ],
+                [
+                    InlineKeyboardButton("📋 السجلات", callback_data="logs"),
+                    InlineKeyboardButton("⚙️ الإعدادات", callback_data="config")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            welcome_message = self.messages.get_message("welcome")
+            await query.edit_message_text(welcome_message, reply_markup=reply_markup)
     
     async def chat_member_update(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle chat member updates"""
