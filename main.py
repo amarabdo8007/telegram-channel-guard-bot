@@ -49,7 +49,7 @@ def main():
     logger.info("Bot is starting...")
     
     # Start the bot
-    application.run_polling(allowed_updates=["message", "chat_member"])
+    application.run_polling(allowed_updates=["message", "chat_member", "callback_query"])
 
 if __name__ == "__main__":
     main()
