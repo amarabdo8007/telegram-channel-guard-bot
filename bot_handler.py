@@ -260,33 +260,68 @@ class BotHandler:
         await update.message.reply_text(message)
     
     async def add_channel_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Add current channel to protected channels list"""
-        if not update.effective_user or not update.effective_chat or not update.message:
+        """Add specified channel to protected channels list"""
+        if not update.effective_user or not update.message:
+            return
+            
+        if not context.args:
+            await update.message.reply_text(
+                "📝 الاستخدام: /add_channel [ID_القناة]\nمثال: /add_channel -1001234567890"
+            )
             return
             
         user = update.effective_user
-        chat = update.effective_chat
         
-        # Check if user is channel creator
-        if not await self.is_channel_creator(user.id, chat.id, context):
-            await update.message.reply_text(self.messages.get_message("only_creator_allowed"))
+        try:
+            channel_id = int(context.args[0])
+        except (ValueError, IndexError):
+            await update.message.reply_text(
+                "❌ معرف القناة غير صحيح\n📝 الاستخدام: /add_channel [ID_القناة]\nمثال: /add_channel -1001234567890"
+            )
+            return
+        
+        try:
+            # Check if user is member of the channel and get their status
+            member = await context.bot.get_chat_member(channel_id, user.id)
+            if member.status not in ['creator', 'administrator']:
+                await update.message.reply_text(
+                    "❌ يجب أن تكون مالك القناة أو مشرف لإضافتها للحماية"
+                )
+                return
+                
+            # Get channel info
+            channel_info = await context.bot.get_chat(channel_id)
+            channel_title = channel_info.title or f"Channel {channel_id}"
+            
+        except Exception as e:
+            await update.message.reply_text(
+                f"❌ فشل في الوصول للقناة {channel_id}\n"
+                "تأكد من:\n"
+                "• صحة معرف القناة\n"
+                "• إضافة البوت كمشرف في القناة\n"
+                "• منح البوت الصلاحيات المطلوبة"
+            )
             return
         
         # Add channel to protected list if not already there
-        if chat.id not in self.config["channel_settings"]["protected_channels"]:
-            self.config["channel_settings"]["protected_channels"].append(chat.id)
+        if channel_id not in self.config["channel_settings"]["protected_channels"]:
+            self.config["channel_settings"]["protected_channels"].append(channel_id)
             self.save_config()
             
             self.bot_logger.log_action(
                 action="channel_added_to_protection",
-                chat_id=chat.id,
+                chat_id=channel_id,
                 admin_id=user.id,
                 admin_username=user.username
             )
             
-            await update.message.reply_text(self.messages.get_message("channel_added_success"))
+            await update.message.reply_text(
+                f"✅ تم إضافة القناة {channel_title} إلى قائمة الحماية بنجاح!\n"
+                f"🆔 معرف القناة: {channel_id}\n\n"
+                "البوت الآن سيراقب أنشطة المشرفين المحددين في هذه القناة."
+            )
         else:
-            await update.message.reply_text(self.messages.get_message("channel_already_protected"))
+            await update.message.reply_text(f"⚠️ القناة {channel_title} محمية بالفعل!")
     
     async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle inline keyboard button presses"""
@@ -298,40 +333,11 @@ class BotHandler:
         
         if query.data == "add_channel":
             # Show instructions for adding channel
-            keyboard = [[InlineKeyboardButton("✅ إضافة هذه القناة", callback_data="confirm_add_channel")]]
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             message = self.messages.get_message("add_channel_instructions")
             await query.edit_message_text(message, reply_markup=reply_markup)
-            
-        elif query.data == "confirm_add_channel":
-            # Add current channel to protection
-            if not query.from_user or not query.message or not query.message.chat:
-                return
-                
-            user = query.from_user
-            chat = query.message.chat
-            
-            # Check if user is channel creator
-            if not await self.is_channel_creator(user.id, chat.id, context):
-                await query.edit_message_text(self.messages.get_message("only_creator_allowed"))
-                return
-            
-            # Add channel to protected list
-            if chat.id not in self.config["channel_settings"]["protected_channels"]:
-                self.config["channel_settings"]["protected_channels"].append(chat.id)
-                self.save_config()
-                
-                self.bot_logger.log_action(
-                    action="channel_added_to_protection",
-                    chat_id=chat.id,
-                    admin_id=user.id,
-                    admin_username=user.username
-                )
-                
-                await query.edit_message_text(self.messages.get_message("channel_added_success"))
-            else:
-                await query.edit_message_text(self.messages.get_message("channel_already_protected"))
                 
         elif query.data == "add_admin":
             # Show instructions for adding admin
