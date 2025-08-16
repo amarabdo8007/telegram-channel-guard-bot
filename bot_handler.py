@@ -729,8 +729,6 @@ class BotHandler:
     
     async def handle_admin_id_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id_text: str):
         """Handle admin ID input"""
-        user = update.effective_user
-        
         try:
             admin_id = int(admin_id_text)
         except ValueError:
@@ -739,57 +737,126 @@ class BotHandler:
                 "يجب أن يكون رقم صحيح مثل: 123456789"
             )
             return
+        
+        # Check if this is for a specific channel or general
+        target_channel_id = context.user_data.get('target_channel_id')
+        
+        if target_channel_id:
+            # Adding admin for specific channel
+            await self.add_admin_to_specific_channel(update, context, admin_id, target_channel_id)
+        else:
+            # Old general method - check all protected channels  
+            await self.add_admin_general(update, context, admin_id)
+        
+        # Clear the waiting state
+        context.user_data.pop('waiting_for', None)
+        context.user_data.pop('target_channel_id', None)
+    
+    async def add_admin_to_specific_channel(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id: int, channel_id: int):
+        """Add admin for monitoring in specific channel"""
+        try:
+            # Get channel info for display
+            channel_info = await context.bot.get_chat(channel_id)
+            channel_name = channel_info.title or f"Channel {channel_id}"
             
-        # Check if user has any protected channels
-        if not self.config["channel_settings"]["protected_channels"]:
-            await update.message.reply_text(
-                "❌ يجب إضافة قناة للحماية أولاً قبل إضافة المشرفين"
-            )
-            context.user_data.pop('waiting_for', None)
+            # Check if admin exists in this specific channel
+            member = await context.bot.get_chat_member(channel_id, admin_id)
+            status = member.status
+            
+            self.logger.info(f"Channel {channel_id}: User {admin_id} status = {status}")
+            
+            if status not in ['creator', 'administrator']:
+                await update.message.reply_text(
+                    f"❌ المعرف {admin_id} ليس مشرف في القناة {channel_name}\n\n"
+                    f"📋 حالة المستخدم في القناة: {status}\n\n"
+                    "تأكد من:\n"
+                    "• أن المعرف صحيح\n"
+                    "• أن الشخص مشرف فعلي في هذه القناة"
+                )
+                return
+            
+            # Add admin to monitored list if not already there
+            if admin_id not in self.config["channel_settings"]["monitored_admins"]:
+                self.config["channel_settings"]["monitored_admins"].append(admin_id)
+                self.save_config()
+                
+                self.bot_logger.log_action(
+                    action="admin_added_to_monitor",
+                    user_id=admin_id,
+                    chat_id=channel_id,
+                    admin_id=update.effective_user.id if update.effective_user else None,
+                    admin_username=update.effective_user.username if update.effective_user else None
+                )
+                
+                keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await update.message.reply_text(
+                    f"✅ تم إضافة المشرف {admin_id} إلى قائمة المراقبة بنجاح!\n\n"
+                    f"📋 القناة: {channel_name}\n"
+                    f"🆔 معرف المشرف: {admin_id}\n\n"
+                    "البوت الآن سيراقب أنشطة هذا المشرف في جميع القنوات المحمية.",
+                    reply_markup=reply_markup
+                )
+            else:
+                keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await update.message.reply_text(
+                    f"⚠️ المشرف {admin_id} مراقب بالفعل!",
+                    reply_markup=reply_markup
+                )
+                
+        except Exception as e:
+            error_msg = f"❌ فشل في الوصول للقناة {channel_id} أو المشرف {admin_id}\n"
+            error_msg += f"الخطأ: {str(e)}\n\n"
+            error_msg += "تأكد من:\n"
+            error_msg += "• صحة معرف المشرف\n"
+            error_msg += "• أن البوت يمكنه الوصول للقناة\n"
+            error_msg += "• أن المشرف موجود في القناة"
+            
+            await update.message.reply_text(error_msg)
+            self.logger.warning(f"Error adding admin {admin_id} to channel {channel_id}: {e}")
+    
+    async def add_admin_general(self, update: Update, context: ContextTypes.DEFAULT_TYPE, admin_id: int):
+        """Add admin using old general method - check all protected channels"""
+        protected_channels = self.config.get("channel_settings", {}).get("protected_channels", [])
+        if not protected_channels:
+            await update.message.reply_text("❌ لا توجد قنوات محمية. أضف قناة أولاً.")
             return
+            
+        # Enhanced admin verification with detailed diagnostics
+        admin_status_messages = []
+        is_valid_admin = False
         
-        # Verify that the admin is actually an admin in at least one protected channel
-        is_admin_in_any_channel = False
-        admin_channels = []
-        
-        error_details = []
-        for channel_id in self.config["channel_settings"]["protected_channels"]:
+        for channel_id in protected_channels:
             try:
                 member = await context.bot.get_chat_member(channel_id, admin_id)
-                self.logger.info(f"Channel {channel_id}: User {admin_id} status = {member.status}")
+                status = member.status
+                admin_status_messages.append(f"• القناة {channel_id}: الحالة = {status}")
                 
-                if member.status in ['creator', 'administrator']:
-                    is_admin_in_any_channel = True
-                    # Get channel name for display
-                    try:
-                        channel_info = await context.bot.get_chat(channel_id)
-                        admin_channels.append(channel_info.title or f"Channel {channel_id}")
-                    except:
-                        admin_channels.append(f"Channel {channel_id}")
-                else:
-                    error_details.append(f"• القناة {channel_id}: الحالة = {member.status}")
+                # Log detailed status
+                self.logger.info(f"Channel {channel_id}: User {admin_id} status = {status}")
+                
+                if status in ['creator', 'administrator']:
+                    is_valid_admin = True
                     
             except Exception as e:
-                error_details.append(f"• القناة {channel_id}: خطأ في الوصول - {str(e)}")
-                self.logger.error(f"Error checking admin {admin_id} in channel {channel_id}: {e}")
-                continue
+                error_msg = f"• القناة {channel_id}: خطأ في الوصول - {str(e)}"
+                admin_status_messages.append(error_msg)
+                self.logger.warning(f"Channel {channel_id}: Error checking admin {admin_id}: {e}")
         
-        if not is_admin_in_any_channel:
-            error_message = f"❌ المعرف {admin_id} ليس مشرف في أي من القنوات المحمية\n\n"
-            
-            if error_details:
-                error_message += "📋 تفاصيل الفحص:\n"
-                error_message += "\n".join(error_details[:3])  # Show first 3 errors
-                if len(error_details) > 3:
-                    error_message += f"\n... و {len(error_details) - 3} أخطاء أخرى"
-            
-            error_message += "\n\nتأكد من:\n"
-            error_message += "• أن المعرف صحيح\n"
-            error_message += "• أن الشخص مشرف فعلي في إحدى القنوات المحمية\n"
-            error_message += "• أن البوت يمكنه الوصول للقناة"
-            
-            await update.message.reply_text(error_message)
-            context.user_data.pop('waiting_for', None)
+        if not is_valid_admin:
+            # Create detailed error message
+            diagnostics = "\n".join(admin_status_messages)
+            await update.message.reply_text(
+                f"❌ المعرف {admin_id} ليس مشرف في أي من القنوات المحمية\n\n"
+                f"📋 تفاصيل الفحص:\n{diagnostics}\n\n"
+                "تأكد من:\n"
+                "• أن المعرف صحيح\n"
+                "• أن الشخص مشرف فعلي في إحدى القنوات المحمية\n"
+                "• أن البوت يمكنه الوصول للقناة"
+            )
             return
         
         # Add admin to monitored list
@@ -800,8 +867,8 @@ class BotHandler:
             self.bot_logger.log_action(
                 action="admin_added_to_monitor",
                 user_id=admin_id,
-                admin_id=user.id,
-                admin_username=user.username
+                admin_id=update.effective_user.id if update.effective_user else None,
+                admin_username=update.effective_user.username if update.effective_user else None
             )
             
             # Get admin info to display
@@ -811,31 +878,22 @@ class BotHandler:
             except:
                 admin_name = f"Admin {admin_id}"
             
-            # Display channels where this admin is found
-            channels_text = ""
-            if admin_channels:
-                if len(admin_channels) == 1:
-                    channels_text = f"\n\n📍 مشرف في القناة: {admin_channels[0]}"
-                else:
-                    channels_list = "\n• ".join(admin_channels)
-                    channels_text = f"\n\n📍 مشرف في القنوات:\n• {channels_list}"
+            # Show which channels the admin is valid in
+            valid_channels = []
+            for i, message in enumerate(admin_status_messages):
+                if 'creator' in message or 'administrator' in message:
+                    valid_channels.append(protected_channels[i])
             
-            # Create inline keyboard with remove option
-            keyboard = [
-                [InlineKeyboardButton(f"🗑️ إزالة المشرف {admin_name}", callback_data=f"remove_admin_{admin_id}")],
-                [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
-            ]
+            channel_list = ", ".join(str(ch) for ch in valid_channels)
+            
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             await update.message.reply_text(
-                f"✅ تم إضافة المشرف {admin_name} إلى قائمة المراقبة بنجاح!"
-                f"{channels_text}\n\n"
-                "🛡️ البوت سيراقب أنشطة هذا المشرف في جميع القنوات المحمية.\n"
-                "⚠️ إذا قام هذا المشرف بحظر أعضاء عاديين، سيتم إزالته تلقائياً من القناة.",
+                f"✅ تم إضافة المشرف {admin_id} إلى قائمة المراقبة بنجاح!\n\n"
+                f"📋 القنوات التي يراقب فيها: {channel_list}\n\n"
+                "البوت الآن سيراقب أنشطة هذا المشرف.",
                 reply_markup=reply_markup
             )
         else:
-            await update.message.reply_text(f"⚠️ المشرف {admin_id} موجود بالفعل في قائمة المراقبة!")
-            
-        # Clear the waiting state
-        context.user_data.pop('waiting_for', None)
+            await update.message.reply_text(f"⚠️ المشرف {admin_id} مراقب بالفعل!")
