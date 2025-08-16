@@ -695,9 +695,12 @@ class BotHandler:
         is_admin_in_any_channel = False
         admin_channels = []
         
+        error_details = []
         for channel_id in self.config["channel_settings"]["protected_channels"]:
             try:
                 member = await context.bot.get_chat_member(channel_id, admin_id)
+                self.logger.info(f"Channel {channel_id}: User {admin_id} status = {member.status}")
+                
                 if member.status in ['creator', 'administrator']:
                     is_admin_in_any_channel = True
                     # Get channel name for display
@@ -706,18 +709,29 @@ class BotHandler:
                         admin_channels.append(channel_info.title or f"Channel {channel_id}")
                     except:
                         admin_channels.append(f"Channel {channel_id}")
+                else:
+                    error_details.append(f"• القناة {channel_id}: الحالة = {member.status}")
+                    
             except Exception as e:
-                # If we can't check this channel, skip it
+                error_details.append(f"• القناة {channel_id}: خطأ في الوصول - {str(e)}")
+                self.logger.error(f"Error checking admin {admin_id} in channel {channel_id}: {e}")
                 continue
         
         if not is_admin_in_any_channel:
-            await update.message.reply_text(
-                f"❌ المعرف {admin_id} ليس مشرف في أي من القنوات المحمية\n\n"
-                "تأكد من:\n"
-                "• أن المعرف صحيح\n"
-                "• أن الشخص مشرف فعلي في إحدى القنوات المحمية\n"
-                "• أن البوت يمكنه الوصول للقناة"
-            )
+            error_message = f"❌ المعرف {admin_id} ليس مشرف في أي من القنوات المحمية\n\n"
+            
+            if error_details:
+                error_message += "📋 تفاصيل الفحص:\n"
+                error_message += "\n".join(error_details[:3])  # Show first 3 errors
+                if len(error_details) > 3:
+                    error_message += f"\n... و {len(error_details) - 3} أخطاء أخرى"
+            
+            error_message += "\n\nتأكد من:\n"
+            error_message += "• أن المعرف صحيح\n"
+            error_message += "• أن الشخص مشرف فعلي في إحدى القنوات المحمية\n"
+            error_message += "• أن البوت يمكنه الوصول للقناة"
+            
+            await update.message.reply_text(error_message)
             context.user_data.pop('waiting_for', None)
             return
         
