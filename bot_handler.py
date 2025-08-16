@@ -863,10 +863,12 @@ class BotHandler:
                     success_message += "البوت الآن سيراقب أنشطة هذا المستخدم."
                     
                     # Log the action
-                    self.logger.action_log(
+                    self.bot_logger.log_action(
                         action="admin_added_to_monitor",
-                        user_id=update.effective_user.id if update.effective_user else None,
-                        details=f"Added admin {admin_id} to monitoring in channel {channel_id}"
+                        user_id=admin_id,
+                        chat_id=channel_id,
+                        admin_id=update.effective_user.id if update.effective_user else None,
+                        admin_username=update.effective_user.username if update.effective_user else None
                     )
                     
                     keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
