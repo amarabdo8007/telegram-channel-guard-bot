@@ -171,9 +171,8 @@ class BotHandler:
             self.config["channel_settings"]["protected_channels"].append(chat.id)
         
         # Add admin to monitored list
-        success = await self.admin_manager.add_monitored_admin(context.bot, chat.id, admin_id, self.config)
-        
-        if success:
+        if admin_id not in self.config["channel_settings"]["monitored_admins"]:
+            self.config["channel_settings"]["monitored_admins"].append(admin_id)
             self.save_config()
             self.bot_logger.log_action(
                 action="admin_added_to_monitor",
@@ -184,7 +183,7 @@ class BotHandler:
             )
             await update.message.reply_text(self.messages.get_message("admin_added_success", admin_id=admin_id))
         else:
-            await update.message.reply_text(self.messages.get_message("admin_add_failed"))
+            await update.message.reply_text(f"⚠️ المشرف {admin_id} موجود بالفعل في قائمة المراقبة!")
     
     async def remove_admin_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Remove an admin from the monitored list"""
