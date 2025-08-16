@@ -482,6 +482,11 @@ class BotHandler:
             channel_id = int(query.data.replace("show_channel_admins_", ""))
             await self.show_channel_admins(update, context, channel_id)
             
+        elif query.data.startswith("show_monitored_status_"):
+            # Show status of monitored admins
+            channel_id = int(query.data.replace("show_monitored_status_", ""))
+            await self.show_monitored_status(update, context, channel_id)
+            
         elif query.data == "main_menu":
             # Show main menu using the new dynamic interface
             await self.show_main_menu(update, context)
@@ -876,7 +881,21 @@ class BotHandler:
                     
                     await update.message.reply_text(success_message, reply_markup=reply_markup)
                 else:
-                    await update.message.reply_text(f"⚠️ المشرف {admin_id} مراقب بالفعل!")
+                    # Show current status for already monitored admin
+                    keyboard = [
+                        [InlineKeyboardButton("📋 إظهار حالة المشرفين المراقبين", callback_data=f"show_monitored_status_{channel_id}")],
+                        [InlineKeyboardButton("🗑️ إزالة من المراقبة", callback_data=f"remove_admin_{admin_id}")],
+                        [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    
+                    await update.message.reply_text(
+                        f"⚠️ المشرف {admin_id} مراقب بالفعل!\n\n"
+                        f"📍 القناة: {channel_name}\n"
+                        f"📋 حالته الحالية: {status}\n\n"
+                        "💡 يمكنك إظهار حالة جميع المشرفين المراقبين أو إزالته من المراقبة.",
+                        reply_markup=reply_markup
+                    )
                 
         except Exception as e:
             error_msg = f"❌ فشل في الوصول للقناة {channel_id} أو المشرف {admin_id}\n"
@@ -1018,3 +1037,80 @@ class BotHandler:
                 await update.message.reply_text(error_msg, reply_markup=reply_markup)
             
             self.logger.warning(f"Error getting admins for channel {channel_id}: {e}")
+    
+    async def show_monitored_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE, channel_id: int):
+        """Show status of all monitored admins in the channel"""
+        try:
+            # Get channel info
+            channel_info = await context.bot.get_chat(channel_id)
+            channel_name = channel_info.title or f"Channel {channel_id}"
+            
+            # Get monitored admins
+            monitored_admins = self.config["channel_settings"]["monitored_admins"]
+            
+            if not monitored_admins:
+                message = f"📋 لا يوجد مشرفين مراقبين في القناة {channel_name}"
+            else:
+                status_list = []
+                for admin_id in monitored_admins:
+                    try:
+                        # Check current status
+                        member = await context.bot.get_chat_member(channel_id, admin_id)
+                        status = member.status
+                        
+                        # Get user info
+                        try:
+                            user_info = await context.bot.get_chat(admin_id)
+                            user_name = user_info.first_name or f"User {admin_id}"
+                        except:
+                            user_name = f"User {admin_id}"
+                        
+                        if status == 'creator':
+                            status_icon = "👑"
+                            status_text = "مالك القناة"
+                        elif status == 'administrator':
+                            status_icon = "👤"
+                            status_text = "مشرف فعال"
+                        elif status == 'member':
+                            status_icon = "⚠️"
+                            status_text = "عضو عادي (ليس مشرف)"
+                        elif status == 'left':
+                            status_icon = "❌"
+                            status_text = "غادر القناة"
+                        elif status == 'kicked':
+                            status_icon = "🚫"
+                            status_text = "محظور"
+                        else:
+                            status_icon = "❓"
+                            status_text = f"حالة غير معروفة: {status}"
+                        
+                        status_list.append(f"{status_icon} {user_name} (ID: {admin_id})\n   └── {status_text}")
+                        
+                    except Exception as e:
+                        status_list.append(f"❓ User {admin_id}\n   └── خطأ في الفحص: {str(e)}")
+                
+                status_text = "\n\n".join(status_list)
+                message = f"📋 حالة المشرفين المراقبين في القناة {channel_name}:\n\n{status_text}\n\n"
+                message += "💡 المشرفين الذين ليسوا فعالين لن يتم مراقبة أنشطتهم."
+            
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            if hasattr(update, 'callback_query') and update.callback_query:
+                await update.callback_query.edit_message_text(message, reply_markup=reply_markup)
+            else:
+                await update.message.reply_text(message, reply_markup=reply_markup)
+                
+        except Exception as e:
+            error_msg = f"❌ فشل في الحصول على حالة المشرفين المراقبين للقناة {channel_id}\n"
+            error_msg += f"الخطأ: {str(e)}"
+            
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            if hasattr(update, 'callback_query') and update.callback_query:
+                await update.callback_query.edit_message_text(error_msg, reply_markup=reply_markup)
+            else:
+                await update.message.reply_text(error_msg, reply_markup=reply_markup)
+            
+            self.logger.warning(f"Error getting monitored status for channel {channel_id}: {e}")
