@@ -649,11 +649,7 @@ class BotHandler:
                     button_text = f"👤 إضافة مشرف للقناة {channel_id}"
                     keyboard.append([InlineKeyboardButton(button_text, callback_data=f"add_admin_to_channel_{channel_id}")])
         
-        # Add additional menu options
-        keyboard.extend([
-            [InlineKeyboardButton("📋 إظهار حالة المشرفين المراقبين", callback_data="show_admin_status")],
-            [InlineKeyboardButton("⚙️ الإعدادات والسجلات", callback_data="show_config")]
-        ])
+
         
         reply_markup = InlineKeyboardMarkup(keyboard)
         
