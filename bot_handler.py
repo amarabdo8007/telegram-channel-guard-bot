@@ -601,24 +601,43 @@ class BotHandler:
         """Show the main menu based on current state"""
         welcome_message = self.messages.get_message("welcome")
         
+        # Get current user
+        user_id = None
+        if hasattr(update, 'message') and update.message and update.message.from_user:
+            user_id = update.message.from_user.id
+        elif hasattr(update, 'callback_query') and update.callback_query and update.callback_query.from_user:
+            user_id = update.callback_query.from_user.id
+        
         # Check if there are protected channels
         protected_channels = self.config.get("channel_settings", {}).get("protected_channels", [])
         
+        # Filter channels to show only those owned by the current user
+        user_owned_channels = []
+        if user_id:
+            for channel_id in protected_channels:
+                try:
+                    # Check if user is the channel creator/owner
+                    if await self.is_channel_creator(user_id, channel_id, context):
+                        user_owned_channels.append(channel_id)
+                except:
+                    # Skip channels where we can't verify ownership
+                    continue
+        
         keyboard = []
         
-        if not protected_channels:
-            # No channels added yet - show only add channel button
+        if not user_owned_channels:
+            # No channels owned by this user - show only add channel button
             keyboard = [
                 [InlineKeyboardButton("🛡️ إضافة قناة للحماية", callback_data="add_channel")]
             ]
         else:
-            # Channels exist - show add channel and channel-specific admin buttons
+            # User owns channels - show add channel and channel-specific admin buttons
             keyboard = [
                 [InlineKeyboardButton("🛡️ إضافة قناة جديدة للحماية", callback_data="add_channel")]
             ]
             
-            # Add button for each protected channel to add admins
-            for channel_id in protected_channels:
+            # Add button for each channel owned by the user
+            for channel_id in user_owned_channels:
                 try:
                     # Get channel info
                     channel_info = await context.bot.get_chat(channel_id)
@@ -629,6 +648,12 @@ class BotHandler:
                     # If can't get channel info, use ID
                     button_text = f"👤 إضافة مشرف للقناة {channel_id}"
                     keyboard.append([InlineKeyboardButton(button_text, callback_data=f"add_admin_to_channel_{channel_id}")])
+        
+        # Add additional menu options
+        keyboard.extend([
+            [InlineKeyboardButton("📋 إظهار حالة المشرفين المراقبين", callback_data="show_admin_status")],
+            [InlineKeyboardButton("⚙️ الإعدادات والسجلات", callback_data="show_config")]
+        ])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
         
