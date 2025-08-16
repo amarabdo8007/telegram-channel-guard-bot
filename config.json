@@ -6,9 +6,12 @@
   },
   "channel_settings": {
     "protected_channels": [
-      -1002354690770
+      -1002354690770,
+      -1002128165594
     ],
-    "monitored_admins": [],
+    "monitored_admins": [
+      1845807623
+    ],
     "auto_ban_enabled": true,
     "notification_enabled": true
   },

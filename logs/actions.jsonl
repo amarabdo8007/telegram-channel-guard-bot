@@ -59,3 +59,10 @@
 {"timestamp": "2025-08-16T22:09:30.309100", "action": "admin_banned_for_abuse", "user_id": 6195301672, "username": "G_COIN_help_Support", "chat_id": -1002354690770, "admin_id": null, "admin_username": null, "reason": "Banned regular member 1947870988"}
 {"timestamp": "2025-08-16T22:09:30.538311", "action": "member_banned", "user_id": 6195301672, "username": "G_COIN_help_Support", "chat_id": -1002354690770, "admin_id": 8092698324, "admin_username": "V_X12X_BOT", "reason": null}
 {"timestamp": "2025-08-16T22:11:30.069126", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T22:29:30.686784", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T22:30:22.333318", "action": "channel_added_to_protection", "user_id": null, "username": null, "chat_id": -1002128165594, "admin_id": 6854864464, "admin_username": "BOKAYLO", "reason": null}
+{"timestamp": "2025-08-16T22:31:38.979158", "action": "admin_added_to_monitor", "user_id": 1845807623, "username": null, "chat_id": -1002128165594, "admin_id": 6854864464, "admin_username": "BOKAYLO", "reason": null}
+{"timestamp": "2025-08-16T22:32:29.425437", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T22:34:27.249475", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T22:34:49.804076", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T22:35:17.289274", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}

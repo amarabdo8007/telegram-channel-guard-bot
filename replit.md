@@ -6,6 +6,7 @@ This is a Telegram Channel Protection Bot built with Python that monitors admin 
 
 Preferred communication style: Simple, everyday language.
 Language: Arabic - All bot messages and responses in Arabic.
+ID Helper Bot: Always reference @GetChatID_IL_BOT in instructions for obtaining user/channel IDs.
 
 # System Architecture
 
