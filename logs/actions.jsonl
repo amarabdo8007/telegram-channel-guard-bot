@@ -110,3 +110,4 @@
 {"timestamp": "2025-08-16T23:17:40.102515", "action": "member_banned", "user_id": 7860334115, "username": "Goggjko", "chat_id": -1002204271589, "admin_id": 2069046826, "admin_username": "Gojo00987", "reason": null}
 {"timestamp": "2025-08-16T23:20:54.977956", "action": "member_banned", "user_id": 7784415912, "username": "Gohfoj", "chat_id": -1002204271589, "admin_id": 2069046826, "admin_username": "Gojo00987", "reason": null}
 {"timestamp": "2025-08-16T23:20:55.217007", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T23:29:45.191262", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}

@@ -78,3 +78,22 @@ Defensive programming approach with:
 ## Language Support
 - **UTF-8 encoding**: Full Arabic language support throughout the application
 - **Internationalization ready**: Modular message system for easy language expansion
+
+# Deployment Configuration
+
+## Cloud Run Deployment Support
+Added Flask HTTP server for deployment health checks:
+- **Flask Framework**: Integrated Flask web server for HTTP endpoints
+- **Health Check Endpoints**: 
+  - `/` - Main health check endpoint returning JSON status
+  - `/health` - Additional health endpoint for monitoring
+- **Threading Architecture**: Flask server runs in separate daemon thread alongside Telegram bot
+- **Port Configuration**: Uses PORT environment variable (defaults to 5000)
+- **Deployment Ready**: Configured for Google Cloud Run deployment with proper health check responses
+
+## Recent Changes (August 16, 2025)
+- Added Flask dependency to project requirements
+- Implemented HTTP health check server in main.py
+- Modified application architecture to support both Telegram bot and web server
+- Fixed deployment configuration issues for Cloud Run compatibility
+- Maintained full Telegram bot functionality while adding deployment support

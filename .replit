@@ -42,3 +42,7 @@ args = "pip install python-telegram-bot"
 
 [deployment]
 deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

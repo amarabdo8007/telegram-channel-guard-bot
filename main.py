@@ -7,12 +7,36 @@ Main entry point for the bot application
 import os
 import asyncio
 import logging
+import threading
+from flask import Flask, jsonify
 from telegram.ext import Application, CommandHandler, ChatMemberHandler, CallbackQueryHandler, MessageHandler, filters
 from bot_handler import BotHandler
 from logger import setup_logging
 
+# Flask app for health checks
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    """Health check endpoint for deployment"""
+    return jsonify({
+        "status": "healthy",
+        "service": "telegram-bot",
+        "message": "Bot is running"
+    })
+
+@app.route('/health')
+def health():
+    """Additional health endpoint"""
+    return jsonify({"status": "ok"})
+
+def run_flask_server():
+    """Run Flask server in a separate thread"""
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+
 def main():
-    """Main function to start the bot"""
+    """Main function to start the bot and health check server"""
     # Setup logging
     setup_logging()
     logger = logging.getLogger(__name__)
@@ -22,6 +46,11 @@ def main():
     if not bot_token:
         logger.error("TELEGRAM_BOT_TOKEN environment variable is required")
         return
+    
+    # Start Flask server in a separate thread for health checks
+    flask_thread = threading.Thread(target=run_flask_server, daemon=True)
+    flask_thread.start()
+    logger.info("Health check server started on port %s", os.environ.get("PORT", 5000))
     
     # Create application
     application = Application.builder().token(bot_token).build()
@@ -51,7 +80,7 @@ def main():
     # Add chat member handler to monitor admin changes
     application.add_handler(ChatMemberHandler(bot_handler.chat_member_update, ChatMemberHandler.CHAT_MEMBER))
     
-    logger.info("Bot is starting...")
+    logger.info("Telegram bot is starting...")
     
     # Start the bot
     application.run_polling(allowed_updates=["message", "chat_member", "callback_query"])
