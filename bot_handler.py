@@ -59,18 +59,7 @@ class BotHandler:
         
         welcome_message = self.messages.get_message("welcome")
         
-        # Create inline keyboard with buttons
-        keyboard = [
-            [
-                InlineKeyboardButton("🛡️ إضافة قناة للحماية", callback_data="add_channel")
-            ],
-            [
-                InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin")
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+        await self.show_main_menu(update, context)
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command"""
@@ -330,10 +319,16 @@ class BotHandler:
                 admin_username=user.username
             )
             
+            # Show success message with button to return to main menu
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
             await update.message.reply_text(
                 f"✅ تم إضافة القناة {channel_title} إلى قائمة الحماية بنجاح!\n"
                 f"🆔 معرف القناة: {channel_id}\n\n"
-                "البوت الآن سيراقب أنشطة المشرفين المحددين في هذه القناة."
+                "البوت الآن سيراقب أنشطة المشرفين المحددين في هذه القناة.\n\n"
+                "💡 اضغط العودة للقائمة الرئيسية لإضافة مشرفين للمراقبة.",
+                reply_markup=reply_markup
             )
         else:
             await update.message.reply_text(f"⚠️ القناة {channel_title} محمية بالفعل!")
@@ -398,6 +393,39 @@ class BotHandler:
             # Store that we're waiting for admin ID from this user
             context.user_data['waiting_for'] = 'admin_id'
             
+        elif query.data.startswith("add_admin_to_channel_"):
+            # Extract channel ID from callback data
+            channel_id = int(query.data.replace("add_admin_to_channel_", ""))
+            
+            # Store the channel ID for later use
+            context.user_data['target_channel_id'] = channel_id
+            
+            # Get channel name for display
+            try:
+                channel_info = await context.bot.get_chat(channel_id)
+                channel_name = channel_info.title or f"Channel {channel_id}"
+            except:
+                channel_name = f"Channel {channel_id}"
+            
+            # Show instructions for adding admin to specific channel
+            keyboard = [
+                [InlineKeyboardButton("📝 إدخال ID المشرف", callback_data="input_admin_id")],
+                [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.edit_message_text(
+                f"👤 إضافة مشرف للمراقبة في القناة {channel_name}\n\n"
+                "📋 لإضافة مشرف للمراقبة:\n"
+                "• احصل على معرف المشرف (User ID)\n"
+                "• تأكد من أن المشرف موجود في هذه القناة\n"
+                "• اضغط على 'إدخال ID المشرف' وأرسل المعرف\n\n"
+                "💡 طرق الحصول على معرف المشرف:\n"
+                "• استخدم @userinfobot\n"
+                "• أو استخدم @getidsbot\n"
+                "• أو ابحث في إعدادات التيليجرام",
+                reply_markup=reply_markup
+            )
 
         elif query.data.startswith("remove_channel_"):
             # Handle channel removal
@@ -450,19 +478,8 @@ class BotHandler:
                 await query.edit_message_text("❌ المشرف غير موجود في قائمة المراقبة!")
                 
         elif query.data == "main_menu":
-            # Show main menu
-            keyboard = [
-                [
-                    InlineKeyboardButton("🛡️ إضافة قناة للحماية", callback_data="add_channel")
-                ],
-                [
-                    InlineKeyboardButton("👤 إضافة مشرف للمراقبة", callback_data="add_admin")
-                ]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            welcome_message = self.messages.get_message("welcome")
-            await query.edit_message_text(welcome_message, reply_markup=reply_markup)
+            # Show main menu using the new dynamic interface
+            await self.show_main_menu(update, context)
     
     async def chat_member_update(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle chat member updates"""
@@ -570,6 +587,46 @@ class BotHandler:
         except Exception as e:
             self.logger.error(f"Error handling admin ban action: {e}")
     
+    async def show_main_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Show the main menu based on current state"""
+        welcome_message = self.messages.get_message("welcome")
+        
+        # Check if there are protected channels
+        protected_channels = self.config.get("channel_settings", {}).get("protected_channels", [])
+        
+        keyboard = []
+        
+        if not protected_channels:
+            # No channels added yet - show only add channel button
+            keyboard = [
+                [InlineKeyboardButton("🛡️ إضافة قناة للحماية", callback_data="add_channel")]
+            ]
+        else:
+            # Channels exist - show add channel and channel-specific admin buttons
+            keyboard = [
+                [InlineKeyboardButton("🛡️ إضافة قناة جديدة للحماية", callback_data="add_channel")]
+            ]
+            
+            # Add button for each protected channel to add admins
+            for channel_id in protected_channels:
+                try:
+                    # Get channel info
+                    channel_info = await context.bot.get_chat(channel_id)
+                    channel_name = channel_info.title or f"Channel {channel_id}"
+                    button_text = f"👤 إضافة مشرف للقناة {channel_name}"
+                    keyboard.append([InlineKeyboardButton(button_text, callback_data=f"add_admin_to_channel_{channel_id}")])
+                except:
+                    # If can't get channel info, use ID
+                    button_text = f"👤 إضافة مشرف للقناة {channel_id}"
+                    keyboard.append([InlineKeyboardButton(button_text, callback_data=f"add_admin_to_channel_{channel_id}")])
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        if hasattr(update, 'message') and update.message:
+            await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+        elif hasattr(update, 'callback_query') and update.callback_query:
+            await update.callback_query.edit_message_text(welcome_message, reply_markup=reply_markup)
+
     async def is_authorized_user(self, user_id, chat_id, context):
         """Check if user is authorized to use admin commands"""
         try:
