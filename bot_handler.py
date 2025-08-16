@@ -477,6 +477,11 @@ class BotHandler:
             else:
                 await query.edit_message_text("❌ المشرف غير موجود في قائمة المراقبة!")
                 
+        elif query.data.startswith("show_channel_admins_"):
+            # Show current admins in channel
+            channel_id = int(query.data.replace("show_channel_admins_", ""))
+            await self.show_channel_admins(update, context, channel_id)
+            
         elif query.data == "main_menu":
             # Show main menu using the new dynamic interface
             await self.show_main_menu(update, context)
@@ -766,13 +771,40 @@ class BotHandler:
             self.logger.info(f"Channel {channel_id}: User {admin_id} status = {status}")
             
             if status not in ['creator', 'administrator']:
-                await update.message.reply_text(
-                    f"❌ المعرف {admin_id} ليس مشرف في القناة {channel_name}\n\n"
-                    f"📋 حالة المستخدم في القناة: {status}\n\n"
-                    "تأكد من:\n"
-                    "• أن المعرف صحيح\n"
-                    "• أن الشخص مشرف فعلي في هذه القناة"
-                )
+                # Check if admin was previously monitored but lost permissions
+                was_monitored = admin_id in self.config["channel_settings"]["monitored_admins"]
+                
+                status_message = f"❌ المعرف {admin_id} ليس مشرف في القناة {channel_name}\n\n"
+                status_message += f"📋 حالة المستخدم في القناة: {status}\n\n"
+                
+                if was_monitored:
+                    status_message += "⚠️ تحذير: هذا المستخدم كان مشرف مراقب سابقاً!\n"
+                    status_message += "هذا يعني أنه فقد صلاحيات الإدارة أو تم تغيير دوره.\n\n"
+                    
+                    # Ask if user wants to remove from monitoring
+                    keyboard = [
+                        [InlineKeyboardButton("🗑️ إزالته من قائمة المراقبة", callback_data=f"remove_admin_{admin_id}")],
+                        [InlineKeyboardButton("📋 عرض المشرفين الحاليين", callback_data=f"show_channel_admins_{channel_id}")],
+                        [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    
+                    await update.message.reply_text(status_message, reply_markup=reply_markup)
+                else:
+                    status_message += "تأكد من:\n"
+                    status_message += "• أن المعرف صحيح\n"
+                    status_message += "• أن الشخص مشرف فعلي في هذه القناة\n"
+                    status_message += "• أن البوت يمكنه رؤية قائمة المشرفين\n\n"
+                    status_message += "💡 جرب عرض المشرفين الحاليين في القناة للتأكد."
+                    
+                    keyboard = [
+                        [InlineKeyboardButton("📋 عرض المشرفين الحاليين", callback_data=f"show_channel_admins_{channel_id}")],
+                        [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
+                    ]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    
+                    await update.message.reply_text(status_message, reply_markup=reply_markup)
+                
                 return
             
             # Add admin to monitored list if not already there
@@ -897,3 +929,53 @@ class BotHandler:
             )
         else:
             await update.message.reply_text(f"⚠️ المشرف {admin_id} مراقب بالفعل!")
+    
+    async def show_channel_admins(self, update: Update, context: ContextTypes.DEFAULT_TYPE, channel_id: int):
+        """Show current admins in the specified channel"""
+        try:
+            # Get channel info
+            channel_info = await context.bot.get_chat(channel_id)
+            channel_name = channel_info.title or f"Channel {channel_id}"
+            
+            # Get administrators
+            administrators = await context.bot.get_chat_administrators(channel_id)
+            
+            admin_list = []
+            for admin in administrators:
+                if admin.status == 'creator':
+                    admin_list.append(f"👑 {admin.user.first_name or 'Creator'} (المالك) - ID: {admin.user.id}")
+                elif admin.status == 'administrator':
+                    admin_list.append(f"👤 {admin.user.first_name or 'Admin'} (مشرف) - ID: {admin.user.id}")
+            
+            if admin_list:
+                admins_text = "\n".join(admin_list[:10])  # Show first 10 admins
+                if len(admin_list) > 10:
+                    admins_text += f"\n... و {len(admin_list) - 10} مشرفين آخرين"
+                
+                message = f"📋 المشرفين الحاليين في القناة {channel_name}:\n\n{admins_text}\n\n"
+                message += "💡 يمكنك نسخ ID أي مشرف لإضافته للمراقبة."
+            else:
+                message = f"❌ لا يمكن الحصول على قائمة المشرفين في القناة {channel_name}"
+            
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            if hasattr(update, 'callback_query') and update.callback_query:
+                await update.callback_query.edit_message_text(message, reply_markup=reply_markup)
+            else:
+                await update.message.reply_text(message, reply_markup=reply_markup)
+                
+        except Exception as e:
+            error_msg = f"❌ فشل في الحصول على قائمة المشرفين للقناة {channel_id}\n"
+            error_msg += f"الخطأ: {str(e)}\n\n"
+            error_msg += "تأكد من أن البوت لديه صلاحية رؤية المشرفين في القناة."
+            
+            keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            if hasattr(update, 'callback_query') and update.callback_query:
+                await update.callback_query.edit_message_text(error_msg, reply_markup=reply_markup)
+            else:
+                await update.message.reply_text(error_msg, reply_markup=reply_markup)
+            
+            self.logger.warning(f"Error getting admins for channel {channel_id}: {e}")
