@@ -847,10 +847,29 @@ class BotHandler:
                     except:
                         user_name = f"User {admin_id}"
                     
+                    # Try to promote user to admin if not already an admin
+                    promotion_result = ""
+                    if status not in ['creator', 'administrator']:
+                        try:
+                            # Promote user to administrator
+                            await context.bot.promote_chat_member(
+                                chat_id=channel_id,
+                                user_id=admin_id,
+                                can_delete_messages=True,
+                                can_restrict_members=True,
+                                can_pin_messages=True,
+                                can_promote_members=False
+                            )
+                            promotion_result = "\n🎉 تم ترقيته لمشرف في القناة بنجاح!"
+                            status_note = "✅ تم ترقيته لمشرف فعال"
+                        except Exception as e:
+                            promotion_result = f"\n⚠️ فشل في ترقيته لمشرف: {str(e)}"
+                            promotion_result += "\nتأكد من أن البوت لديه صلاحية ترقية الأعضاء"
+                    
                     # Create success message
                     success_message = f"✅ تم إضافة {user_name} (ID: {admin_id}) لقائمة المراقبة!\n\n"
                     success_message += f"📍 القناة: {channel_name}\n"
-                    success_message += f"📋 {status_note}\n\n"
+                    success_message += f"📋 {status_note}{promotion_result}\n\n"
                     
                     # Show which channels this admin is now monitored in
                     protected_channels = self.config["channel_settings"]["protected_channels"]
