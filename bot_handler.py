@@ -692,6 +692,36 @@ class BotHandler:
             context.user_data.pop('waiting_for', None)
             return
         
+        # Verify that the admin is actually an admin in at least one protected channel
+        is_admin_in_any_channel = False
+        admin_channels = []
+        
+        for channel_id in self.config["channel_settings"]["protected_channels"]:
+            try:
+                member = await context.bot.get_chat_member(channel_id, admin_id)
+                if member.status in ['creator', 'administrator']:
+                    is_admin_in_any_channel = True
+                    # Get channel name for display
+                    try:
+                        channel_info = await context.bot.get_chat(channel_id)
+                        admin_channels.append(channel_info.title or f"Channel {channel_id}")
+                    except:
+                        admin_channels.append(f"Channel {channel_id}")
+            except Exception as e:
+                # If we can't check this channel, skip it
+                continue
+        
+        if not is_admin_in_any_channel:
+            await update.message.reply_text(
+                f"❌ المعرف {admin_id} ليس مشرف في أي من القنوات المحمية\n\n"
+                "تأكد من:\n"
+                "• أن المعرف صحيح\n"
+                "• أن الشخص مشرف فعلي في إحدى القنوات المحمية\n"
+                "• أن البوت يمكنه الوصول للقناة"
+            )
+            context.user_data.pop('waiting_for', None)
+            return
+        
         # Add admin to monitored list
         if admin_id not in self.config["channel_settings"]["monitored_admins"]:
             self.config["channel_settings"]["monitored_admins"].append(admin_id)
@@ -711,11 +741,14 @@ class BotHandler:
             except:
                 admin_name = f"Admin {admin_id}"
             
-            # Get list of protected channels for display
-            protected_channels = self.config["channel_settings"]["protected_channels"]
+            # Display channels where this admin is found
             channels_text = ""
-            if protected_channels:
-                channels_text = f"\n\n🛡️ القنوات المحمية حالياً: {len(protected_channels)} قناة"
+            if admin_channels:
+                if len(admin_channels) == 1:
+                    channels_text = f"\n\n📍 مشرف في القناة: {admin_channels[0]}"
+                else:
+                    channels_list = "\n• ".join(admin_channels)
+                    channels_text = f"\n\n📍 مشرف في القنوات:\n• {channels_list}"
             
             # Create inline keyboard with remove option
             keyboard = [
@@ -727,7 +760,7 @@ class BotHandler:
             await update.message.reply_text(
                 f"✅ تم إضافة المشرف {admin_name} إلى قائمة المراقبة بنجاح!"
                 f"{channels_text}\n\n"
-                "📍 البوت سيراقب أنشطة هذا المشرف في جميع القنوات المحمية.\n"
+                "🛡️ البوت سيراقب أنشطة هذا المشرف في جميع القنوات المحمية.\n"
                 "⚠️ إذا قام هذا المشرف بحظر أعضاء عاديين، سيتم إزالته تلقائياً من القناة.",
                 reply_markup=reply_markup
             )
