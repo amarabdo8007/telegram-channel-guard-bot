@@ -101,3 +101,12 @@
 {"timestamp": "2025-08-16T23:06:18.970220", "action": "member_banned", "user_id": 7948755236, "username": "B_T_H_T", "chat_id": -1002192097559, "admin_id": 7107050322, "admin_username": "Top_1555", "reason": null}
 {"timestamp": "2025-08-16T23:06:48.363431", "action": "member_banned", "user_id": 7148243531, "username": "cs8lhxw", "chat_id": -1002192097559, "admin_id": 7107050322, "admin_username": "Top_1555", "reason": null}
 {"timestamp": "2025-08-16T23:08:51.436927", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T23:09:51.116900", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T23:09:59.996276", "action": "start_command", "user_id": 7283638094, "username": "olkadi200", "chat_id": 7283638094, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T23:10:18.360612", "action": "admin_added_to_monitor", "user_id": 5335308370, "username": null, "chat_id": null, "admin_id": 7283638094, "admin_username": "olkadi200", "reason": null}
+{"timestamp": "2025-08-16T23:10:44.120916", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T23:14:44.780330", "action": "channel_added_to_protection", "user_id": null, "username": null, "chat_id": -1002204271589, "admin_id": 6145230334, "admin_username": "J_O_H_N8", "reason": null}
+{"timestamp": "2025-08-16T23:15:36.849534", "action": "admin_added_to_monitor", "user_id": 2069046826, "username": null, "chat_id": -1002204271589, "admin_id": 6145230334, "admin_username": "J_O_H_N8", "reason": null}
+{"timestamp": "2025-08-16T23:17:40.102515", "action": "member_banned", "user_id": 7860334115, "username": "Goggjko", "chat_id": -1002204271589, "admin_id": 2069046826, "admin_username": "Gojo00987", "reason": null}
+{"timestamp": "2025-08-16T23:20:54.977956", "action": "member_banned", "user_id": 7784415912, "username": "Gohfoj", "chat_id": -1002204271589, "admin_id": 2069046826, "admin_username": "Gojo00987", "reason": null}
+{"timestamp": "2025-08-16T23:20:55.217007", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
