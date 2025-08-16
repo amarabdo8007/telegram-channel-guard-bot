@@ -97,3 +97,11 @@ Added Flask HTTP server for deployment health checks:
 - Modified application architecture to support both Telegram bot and web server
 - Fixed deployment configuration issues for Cloud Run compatibility
 - Maintained full Telegram bot functionality while adding deployment support
+
+### Deployment Configuration Updates (Latest)
+- **Health Check Endpoints Verified**: Both `/` and `/health` endpoints returning proper JSON responses
+- **Flask Server Integration**: Successfully running on port 5000 with proper HTTP responses
+- **Dependencies**: Flask 3.1.1 installed and configured in pyproject.toml
+- **Main Entry Point**: main.py properly configured as application entry point
+- **Port Configuration**: Using PORT environment variable with fallback to 5000
+- **Threading**: Flask server runs in daemon thread alongside Telegram bot polling
