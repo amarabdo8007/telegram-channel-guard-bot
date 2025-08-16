@@ -96,3 +96,8 @@
 {"timestamp": "2025-08-16T23:03:11.143712", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
 {"timestamp": "2025-08-16T23:03:45.342875", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
 {"timestamp": "2025-08-16T23:04:08.238512", "action": "start_command", "user_id": 7283638094, "username": "olkadi200", "chat_id": 7283638094, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T23:05:04.691137", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-16T23:05:55.281104", "action": "channel_added_to_protection", "user_id": null, "username": null, "chat_id": -1002572905012, "admin_id": 7283638094, "admin_username": "olkadi200", "reason": null}
+{"timestamp": "2025-08-16T23:06:18.970220", "action": "member_banned", "user_id": 7948755236, "username": "B_T_H_T", "chat_id": -1002192097559, "admin_id": 7107050322, "admin_username": "Top_1555", "reason": null}
+{"timestamp": "2025-08-16T23:06:48.363431", "action": "member_banned", "user_id": 7148243531, "username": "cs8lhxw", "chat_id": -1002192097559, "admin_id": 7107050322, "admin_username": "Top_1555", "reason": null}
+{"timestamp": "2025-08-16T23:08:51.436927", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
