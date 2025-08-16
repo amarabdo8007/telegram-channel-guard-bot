@@ -8,9 +8,7 @@
     "protected_channels": [
       -1002354690770
     ],
-    "monitored_admins": [
-      6195301672
-    ],
+    "monitored_admins": [],
     "auto_ban_enabled": true,
     "notification_enabled": true
   },

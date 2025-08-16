@@ -764,14 +764,35 @@ class BotHandler:
             channel_info = await context.bot.get_chat(channel_id)
             channel_name = channel_info.title or f"Channel {channel_id}"
             
-            # Check if admin exists in this specific channel
+            # Check if user is channel owner/creator to allow adding any user
+            user_id = update.effective_user.id if update.effective_user else None
+            if user_id:
+                user_member = await context.bot.get_chat_member(channel_id, user_id)
+                is_channel_owner = user_member.status == 'creator'
+            else:
+                is_channel_owner = False
+            
+            # Check target user status
             member = await context.bot.get_chat_member(channel_id, admin_id)
             status = member.status
             
             self.logger.info(f"Channel {channel_id}: User {admin_id} status = {status}")
             
-            if status not in ['creator', 'administrator']:
-                # Check if admin was previously monitored but lost permissions
+            # If target is already admin, proceed directly
+            if status in ['creator', 'administrator']:
+                add_anyway = True
+                status_note = f"✅ المستخدم مشرف فعلي في القناة (حالة: {status})"
+            
+            # If channel owner wants to add non-admin user, allow with warning
+            elif is_channel_owner:
+                add_anyway = True
+                status_note = f"⚠️ المستخدم ليس مشرف حالياً (حالة: {status})\n"
+                status_note += "لكن سيتم إضافته للمراقبة لأنك مالك القناة.\n"
+                status_note += "💡 تذكر: سيتم مراقبته فقط إذا أصبح مشرف لاحقاً."
+            
+            # If not owner and target is not admin, deny
+            else:
+                add_anyway = False
                 was_monitored = admin_id in self.config["channel_settings"]["monitored_admins"]
                 
                 status_message = f"❌ المعرف {admin_id} ليس مشرف في القناة {channel_name}\n\n"
@@ -781,7 +802,6 @@ class BotHandler:
                     status_message += "⚠️ تحذير: هذا المستخدم كان مشرف مراقب سابقاً!\n"
                     status_message += "هذا يعني أنه فقد صلاحيات الإدارة أو تم تغيير دوره.\n\n"
                     
-                    # Ask if user wants to remove from monitoring
                     keyboard = [
                         [InlineKeyboardButton("🗑️ إزالته من قائمة المراقبة", callback_data=f"remove_admin_{admin_id}")],
                         [InlineKeyboardButton("📋 عرض المشرفين الحاليين", callback_data=f"show_channel_admins_{channel_id}")],
@@ -791,11 +811,12 @@ class BotHandler:
                     
                     await update.message.reply_text(status_message, reply_markup=reply_markup)
                 else:
+                    status_message += "💡 ملاحظة: فقط مالك القناة يمكنه إضافة أي مستخدم للمراقبة.\n"
+                    status_message += "إذا كنت مالك القناة، تأكد من أن البوت يمكنه رؤية صلاحياتك.\n\n"
                     status_message += "تأكد من:\n"
                     status_message += "• أن المعرف صحيح\n"
                     status_message += "• أن الشخص مشرف فعلي في هذه القناة\n"
-                    status_message += "• أن البوت يمكنه رؤية قائمة المشرفين\n\n"
-                    status_message += "💡 جرب عرض المشرفين الحاليين في القناة للتأكد."
+                    status_message += "• أن البوت يمكنه رؤية قائمة المشرفين"
                     
                     keyboard = [
                         [InlineKeyboardButton("📋 عرض المشرفين الحاليين", callback_data=f"show_channel_admins_{channel_id}")],
@@ -807,37 +828,53 @@ class BotHandler:
                 
                 return
             
-            # Add admin to monitored list if not already there
-            if admin_id not in self.config["channel_settings"]["monitored_admins"]:
-                self.config["channel_settings"]["monitored_admins"].append(admin_id)
-                self.save_config()
-                
-                self.bot_logger.log_action(
-                    action="admin_added_to_monitor",
-                    user_id=admin_id,
-                    chat_id=channel_id,
-                    admin_id=update.effective_user.id if update.effective_user else None,
-                    admin_username=update.effective_user.username if update.effective_user else None
-                )
-                
-                keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                
-                await update.message.reply_text(
-                    f"✅ تم إضافة المشرف {admin_id} إلى قائمة المراقبة بنجاح!\n\n"
-                    f"📋 القناة: {channel_name}\n"
-                    f"🆔 معرف المشرف: {admin_id}\n\n"
-                    "البوت الآن سيراقب أنشطة هذا المشرف في جميع القنوات المحمية.",
-                    reply_markup=reply_markup
-                )
-            else:
-                keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                
-                await update.message.reply_text(
-                    f"⚠️ المشرف {admin_id} مراقب بالفعل!",
-                    reply_markup=reply_markup
-                )
+            # Proceed with adding if allowed
+            if add_anyway:
+                # Add admin to monitored list if not already there
+                if admin_id not in self.config["channel_settings"]["monitored_admins"]:
+                    self.config["channel_settings"]["monitored_admins"].append(admin_id)
+                    self.save_config()
+                    
+                    # Get user info if available
+                    try:
+                        user_info = await context.bot.get_chat(admin_id)
+                        user_name = user_info.first_name or f"User {admin_id}"
+                    except:
+                        user_name = f"User {admin_id}"
+                    
+                    # Create success message
+                    success_message = f"✅ تم إضافة {user_name} (ID: {admin_id}) لقائمة المراقبة!\n\n"
+                    success_message += f"📍 القناة: {channel_name}\n"
+                    success_message += f"📋 {status_note}\n\n"
+                    
+                    # Show which channels this admin is now monitored in
+                    protected_channels = self.config["channel_settings"]["protected_channels"]
+                    channel_list = []
+                    for ch_id in protected_channels:
+                        try:
+                            ch_info = await context.bot.get_chat(ch_id)
+                            channel_list.append(ch_info.title or f"Channel {ch_id}")
+                        except:
+                            channel_list.append(f"Channel {ch_id}")
+                    
+                    if len(channel_list) > 1:
+                        success_message += f"📋 القنوات المحمية: {', '.join(channel_list)}\n\n"
+                    
+                    success_message += "البوت الآن سيراقب أنشطة هذا المستخدم."
+                    
+                    # Log the action
+                    self.logger.action_log(
+                        action="admin_added_to_monitor",
+                        user_id=update.effective_user.id if update.effective_user else None,
+                        details=f"Added admin {admin_id} to monitoring in channel {channel_id}"
+                    )
+                    
+                    keyboard = [[InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]]
+                    reply_markup = InlineKeyboardMarkup(keyboard)
+                    
+                    await update.message.reply_text(success_message, reply_markup=reply_markup)
+                else:
+                    await update.message.reply_text(f"⚠️ المشرف {admin_id} مراقب بالفعل!")
                 
         except Exception as e:
             error_msg = f"❌ فشل في الوصول للقناة {channel_id} أو المشرف {admin_id}\n"
