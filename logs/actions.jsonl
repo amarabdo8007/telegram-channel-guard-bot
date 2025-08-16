@@ -53,3 +53,9 @@
 {"timestamp": "2025-08-16T22:01:20.560801", "action": "admin_removed_from_monitor", "user_id": 6195301672, "username": null, "chat_id": null, "admin_id": 6854864464, "admin_username": "BOKAYLO", "reason": null}
 {"timestamp": "2025-08-16T22:04:42.298732", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
 {"timestamp": "2025-08-16T22:04:55.139536", "action": "admin_added_to_monitor", "user_id": 6195301672, "username": null, "chat_id": -1002354690770, "admin_id": 6854864464, "admin_username": "BOKAYLO", "reason": null}
+{"timestamp": "2025-08-16T22:08:53.243490", "action": "admin_removed_from_monitor", "user_id": 6195301672, "username": null, "chat_id": null, "admin_id": 6854864464, "admin_username": "BOKAYLO", "reason": null}
+{"timestamp": "2025-08-16T22:09:00.094113", "action": "admin_added_to_monitor", "user_id": 6195301672, "username": null, "chat_id": -1002354690770, "admin_id": 6854864464, "admin_username": "BOKAYLO", "reason": null}
+{"timestamp": "2025-08-16T22:09:29.588935", "action": "member_banned", "user_id": 1947870988, "username": "sayedmostafa123", "chat_id": -1002354690770, "admin_id": 6195301672, "admin_username": "G_COIN_help_Support", "reason": null}
+{"timestamp": "2025-08-16T22:09:30.309100", "action": "admin_banned_for_abuse", "user_id": 6195301672, "username": "G_COIN_help_Support", "chat_id": -1002354690770, "admin_id": null, "admin_username": null, "reason": "Banned regular member 1947870988"}
+{"timestamp": "2025-08-16T22:09:30.538311", "action": "member_banned", "user_id": 6195301672, "username": "G_COIN_help_Support", "chat_id": -1002354690770, "admin_id": 8092698324, "admin_username": "V_X12X_BOT", "reason": null}
+{"timestamp": "2025-08-16T22:11:30.069126", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
