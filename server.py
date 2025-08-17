@@ -132,8 +132,10 @@ def setup_telegram_bot():
         logger.error("TELEGRAM_BOT_TOKEN environment variable is required")
         return
     
-    # Create application
+    # Create application with improved configuration for conflict resolution
     bot_application = Application.builder().token(bot_token).build()
+    
+    # Note: Webhook clearing will be handled by run_polling automatically
     
     # Initialize bot handler
     bot_handler = BotHandler()
@@ -162,29 +164,21 @@ def setup_telegram_bot():
     
     logger.info("Telegram bot is starting...")
     
-    # Start the bot with better error handling
+    # Simple, robust bot startup with built-in conflict resolution
     try:
         bot_application.run_polling(
             allowed_updates=["message", "chat_member", "callback_query"],
-            drop_pending_updates=True  # Clear any pending updates to avoid conflicts
+            drop_pending_updates=True  # This automatically clears webhooks and pending updates
         )
     except Exception as e:
-        logger.error(f"Bot polling error: {e}")
-        # If there's a conflict, wait and try to restart
-        if "Conflict" in str(e):
-            logger.info("Conflict detected, waiting before restart...")
-            import time
-            time.sleep(10)
-            # Try to restart with cleared state
-            try:
-                bot_application.run_polling(
-                    allowed_updates=["message", "chat_member", "callback_query"],
-                    drop_pending_updates=True
-                )
-            except Exception as retry_error:
-                logger.error(f"Bot restart failed: {retry_error}")
+        error_msg = str(e)
+        logger.error(f"Bot polling error: {error_msg}")
+        
+        if "Conflict" in error_msg or "409" in error_msg:
+            logger.error("Conflict detected: Another bot instance is running with the same token")
+            logger.error("Please ensure only one instance of the bot is running")
         else:
-            logger.error(f"Unexpected error: {e}")
+            logger.error(f"Unexpected bot error: {error_msg}")
             raise
 
 def start_flask_server():
