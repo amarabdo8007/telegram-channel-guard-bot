@@ -174,3 +174,4 @@
 {"timestamp": "2025-08-17T20:52:46.962129", "action": "start_command", "user_id": 6195301672, "username": "G_COIN_help_Support", "chat_id": 6195301672, "admin_id": null, "admin_username": null, "reason": null}
 {"timestamp": "2025-08-17T20:52:59.432025", "action": "start_command", "user_id": 7500525431, "username": "r2atx", "chat_id": 7500525431, "admin_id": null, "admin_username": null, "reason": null}
 {"timestamp": "2025-08-17T20:53:07.078897", "action": "add_channel_command_called", "user_id": 1664860649, "username": null, "chat_id": null, "admin_id": 1664860649, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-17T21:50:38.185220", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}

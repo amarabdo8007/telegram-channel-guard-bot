@@ -127,15 +127,18 @@ Added Flask HTTP server for deployment health checks:
 - `deployment_status.md`: Comprehensive status report created
 - `run.py`: Alternative entry point created for deployment flexibility - now primary entrypoint
 
-**Latest Deployment Fixes Applied (August 17, 2025 - Final):**
-- ✅ **Main Entry Point Correction**: Updated both Procfile and app.yaml to use `python3 main.py` as direct entry point
-- ✅ **$file Variable Issue Resolved**: Removed any references to $file variable by specifying main.py explicitly
-- ✅ **Health Check Endpoints Verified**: Both `/` and `/health` endpoints tested and responding correctly
-- ✅ **HTTP Server Status Confirmed**: Flask server running on port 5000 and accessible
-- ✅ **Dependencies Status Verified**: Flask 2.3.3+ properly installed in pyproject.toml
-- ✅ **Configuration Unified**: All deployment files now consistently use main.py as entry point
-- ✅ **Health Check Response Tested**: GET / returns {"message":"Bot is running","service":"telegram-bot","status":"healthy"}
-- ✅ **Secondary Health Endpoint Tested**: GET /health returns {"status":"ok"}
-- ✅ **Deployment Ready**: All three suggested fixes from deployment error have been successfully applied
-- ✅ **No $file Variable Issues**: Direct specification of main.py eliminates variable reference problems
-- ✅ **HTTP Request Handling Confirmed**: Application successfully responding to health checks for Autoscale deployment
+**Final Deployment Configuration (August 17, 2025 - Success):**
+- ✅ **NEW DEPLOYMENT ARCHITECTURE**: Created server.py as dedicated deployment entry point
+- ✅ **Threading Fixed**: Flask HTTP server runs in daemon thread, Telegram bot in main thread
+- ✅ **Signal Handling Resolved**: Telegram bot now runs in main thread avoiding signal handler errors
+- ✅ **All Health Endpoints Working**: 
+  - `/` returns {"message":"Bot is running","service":"telegram-bot","status":"healthy"}
+  - `/health` returns {"status":"ok"}  
+  - `/bot-status` returns {"bot":"running","handlers":"loaded","status":"active"}
+- ✅ **Procfile Updated**: Now uses `web: python3 server.py`
+- ✅ **app.yaml Updated**: Now uses `entrypoint: python3 server.py`
+- ✅ **No $file Variable References**: Direct specification of server.py entry point
+- ✅ **Port Configuration Verified**: HTTP server binding to 0.0.0.0:5000 correctly
+- ✅ **Both Services Running**: Telegram bot polling and HTTP server responding simultaneously
+- ✅ **Threading Architecture Stable**: No event loop conflicts or signal handling issues
+- ✅ **Deployment Ready**: All deployment requirements met with robust architecture

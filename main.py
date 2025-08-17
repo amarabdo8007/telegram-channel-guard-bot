@@ -33,7 +33,8 @@ def health():
 def run_flask_server():
     """Run Flask server in a separate thread"""
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+    # Ensure the server is accessible for deployment health checks
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False, threaded=True)
 
 def main():
     """Main function to start the bot and health check server"""
