@@ -8,6 +8,8 @@ import os
 import asyncio
 import logging
 import threading
+import time
+import atexit
 from flask import Flask, jsonify
 from telegram.ext import Application, CommandHandler, ChatMemberHandler, CallbackQueryHandler, MessageHandler, filters
 from bot_handler import BotHandler
@@ -18,6 +20,40 @@ app = Flask(__name__)
 
 # Global bot application
 bot_application = None
+bot_lock_file = "/tmp/telegram_bot.lock"
+
+def create_lock_file():
+    """Create a lock file to prevent multiple instances"""
+    try:
+        with open(bot_lock_file, 'w') as f:
+            f.write(str(os.getpid()))
+        atexit.register(remove_lock_file)
+        return True
+    except:
+        return False
+
+def remove_lock_file():
+    """Remove the lock file"""
+    try:
+        if os.path.exists(bot_lock_file):
+            os.remove(bot_lock_file)
+    except:
+        pass
+
+def is_another_instance_running():
+    """Check if another instance is running"""
+    if not os.path.exists(bot_lock_file):
+        return False
+    try:
+        with open(bot_lock_file, 'r') as f:
+            pid = int(f.read().strip())
+        # Check if process is still running
+        os.kill(pid, 0)
+        return True
+    except (OSError, ValueError):
+        # Process doesn't exist, remove stale lock file
+        remove_lock_file()
+        return False
 
 @app.route('/')
 def health_check():
@@ -80,6 +116,16 @@ def setup_telegram_bot():
     setup_logging()
     logger = logging.getLogger(__name__)
     
+    # Check if another instance is running
+    if is_another_instance_running():
+        logger.warning("Another bot instance is already running. Skipping bot startup.")
+        return
+    
+    # Create lock file
+    if not create_lock_file():
+        logger.error("Failed to create lock file. Another instance may be running.")
+        return
+    
     # Get bot token from environment
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not bot_token:
@@ -116,8 +162,30 @@ def setup_telegram_bot():
     
     logger.info("Telegram bot is starting...")
     
-    # Start the bot
-    bot_application.run_polling(allowed_updates=["message", "chat_member", "callback_query"])
+    # Start the bot with better error handling
+    try:
+        bot_application.run_polling(
+            allowed_updates=["message", "chat_member", "callback_query"],
+            drop_pending_updates=True  # Clear any pending updates to avoid conflicts
+        )
+    except Exception as e:
+        logger.error(f"Bot polling error: {e}")
+        # If there's a conflict, wait and try to restart
+        if "Conflict" in str(e):
+            logger.info("Conflict detected, waiting before restart...")
+            import time
+            time.sleep(10)
+            # Try to restart with cleared state
+            try:
+                bot_application.run_polling(
+                    allowed_updates=["message", "chat_member", "callback_query"],
+                    drop_pending_updates=True
+                )
+            except Exception as retry_error:
+                logger.error(f"Bot restart failed: {retry_error}")
+        else:
+            logger.error(f"Unexpected error: {e}")
+            raise
 
 def start_flask_server():
     """Start Flask server in background thread"""
