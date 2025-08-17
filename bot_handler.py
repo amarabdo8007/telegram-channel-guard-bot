@@ -816,12 +816,17 @@ class BotHandler:
                 add_anyway = True
                 status_note = f"✅ المستخدم مشرف فعلي في القناة (حالة: {status})"
             
-            # If channel owner wants to add non-admin user, allow with warning
+            # If channel owner wants to add non-admin user, allow with strong warning
             elif is_channel_owner:
                 add_anyway = True
                 status_note = f"⚠️ المستخدم ليس مشرف حالياً (حالة: {status})\n"
                 status_note += "لكن سيتم إضافته للمراقبة لأنك مالك القناة.\n"
-                status_note += "💡 تذكر: سيتم مراقبته فقط إذا أصبح مشرف لاحقاً."
+                status_note += "💡 هام: البوت سيحاول ترقيته تلقائياً أو يطلب ترقية يدوية"
+                
+                # Check if bot can promote before proceeding
+                if not bot_can_promote:
+                    status_note += f"\n\n🚨 تحذير: البوت لا يستطيع ترقية المستخدم تلقائياً!"
+                    status_note += f"\n   يجب عليك ترقيته يدوياً لمشرف ليتم مراقبته فعلياً."
             
             # If not owner and target is not admin, deny
             else:
@@ -887,14 +892,40 @@ class BotHandler:
                             # Check bot's own permissions first
                             bot_info = await context.bot.get_chat_member(channel_id, context.bot.id)
                             if not hasattr(bot_info, 'can_promote_members') or not bot_info.can_promote_members:
-                                promotion_result = f"\n❌ البوت لا يملك صلاحية ترقية الأعضاء!"
-                                promotion_result += f"\n🔧 المطلوب: تفعيل صلاحية 'إضافة مشرفين جدد' للبوت"
-                                promotion_result += f"\n\n📋 الخطوات:"
-                                promotion_result += f"\n1️⃣ إعدادات القناة → المشرفين"
-                                promotion_result += f"\n2️⃣ ابحث عن البوت واضغط عليه"
-                                promotion_result += f"\n3️⃣ فعل 'إضافة مشرفين جدد'"
-                                promotion_result += f"\n\n⚡ بديل: رقي المستخدم يدوياً والبوت سيراقبه"
-                                status_note = "⚠️ البوت يحتاج صلاحيات إضافية"
+                                promotion_result = f"\n❌ فشل في الترقية التلقائية!"
+                                promotion_result += f"\n🔧 المشكلة: البوت لا يملك صلاحية ترقية الأعضاء"
+                                promotion_result += f"\n\n📋 لحل المشكلة نهائياً:"
+                                promotion_result += f"\n1️⃣ اذهب لإعدادات القناة"
+                                promotion_result += f"\n2️⃣ اختر 'المشرفين'"
+                                promotion_result += f"\n3️⃣ ابحث عن البوت في قائمة المشرفين"
+                                promotion_result += f"\n4️⃣ اضغط على البوت ← تعديل الصلاحيات"
+                                promotion_result += f"\n5️⃣ فعل خيار 'إضافة مشرفين جدد' ✅"
+                                promotion_result += f"\n6️⃣ احفظ التغييرات"
+                                promotion_result += f"\n\n⚡ حل سريع الآن: رقي المستخدم {admin_id} يدوياً لمشرف"
+                                promotion_result += f"\n   والبوت سيراقبه فوراً بعد الترقية!"
+                                
+                                # Don't add to monitoring if can't promote and user is not admin
+                                status_note = "❌ لم يتم ترقيته - يحتاج تدخل يدوي"
+                                
+                                # Remove from monitored list since promotion failed
+                                if admin_id in self.config["channel_settings"]["monitored_admins"]:
+                                    self.config["channel_settings"]["monitored_admins"].remove(admin_id)
+                                    self.save_config()
+                                
+                                # Create warning message for failed promotion
+                                warning_message = f"🚨 فشل في ترقية {user_name} (ID: {admin_id}) لمشرف!\n\n"
+                                warning_message += f"📍 القناة: {channel_name}\n"
+                                warning_message += f"📋 الحالة: {status_note}{promotion_result}\n\n"
+                                warning_message += f"⚠️ ملاحظة مهمة: المستخدم لن يتم مراقبته فعلياً حتى يصبح مشرف في القناة."
+                                
+                                keyboard = [
+                                    [InlineKeyboardButton("📋 عرض المشرفين الحاليين", callback_data=f"show_channel_admins_{channel_id}")],
+                                    [InlineKeyboardButton("🏠 العودة للقائمة الرئيسية", callback_data="main_menu")]
+                                ]
+                                reply_markup = InlineKeyboardMarkup(keyboard)
+                                
+                                await update.message.reply_text(warning_message, reply_markup=reply_markup)
+                                return
                             else:
                                 # Promote user to administrator
                                 await context.bot.promote_chat_member(
