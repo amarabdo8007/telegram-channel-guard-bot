@@ -10,5 +10,7 @@ automatic_scaling:
   max_instances: 10
 
 health_check:
-  path: /
+  path: /health
   port: 5000
+  check_interval_sec: 10
+  timeout_sec: 4

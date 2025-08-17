@@ -21,32 +21,56 @@ bot_application = None
 
 @app.route('/')
 def health_check():
-    """Health check endpoint for deployment"""
-    return jsonify({
-        "status": "healthy",
-        "service": "telegram-bot",
-        "message": "Bot is running"
-    })
+    """Primary health check endpoint for deployment"""
+    try:
+        global bot_application
+        bot_running = bot_application is not None
+        return jsonify({
+            "status": "healthy",
+            "service": "telegram-bot",
+            "message": "Bot is running",
+            "bot_initialized": bot_running,
+            "timestamp": os.environ.get("REPL_ID", "local"),
+            "port": os.environ.get("PORT", "5000")
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error", 
+            "message": str(e)
+        }), 500
 
 @app.route('/health')
 def health():
-    """Additional health endpoint"""
-    return jsonify({"status": "ok"})
+    """Simplified health endpoint"""
+    return jsonify({"status": "ok"}), 200
 
 @app.route('/bot-status')
 def bot_status():
-    """Bot-specific status endpoint"""
+    """Detailed bot status endpoint"""
     global bot_application
-    if bot_application:
+    try:
+        if bot_application:
+            return jsonify({
+                "status": "active",
+                "bot": "running", 
+                "handlers": "loaded",
+                "application_running": True
+            }), 200
         return jsonify({
-            "status": "active",
-            "bot": "running",
-            "handlers": "loaded"
-        })
-    return jsonify({
-        "status": "starting",
-        "bot": "initializing"
-    })
+            "status": "starting",
+            "bot": "initializing",
+            "application_running": False
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+@app.route('/ping')
+def ping():
+    """Simple ping endpoint for basic connectivity test"""
+    return "pong", 200
 
 def setup_telegram_bot():
     """Setup and start Telegram bot in main thread"""

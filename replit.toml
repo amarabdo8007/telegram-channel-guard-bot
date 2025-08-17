@@ -1,0 +1,13 @@
+[deployment]
+run = ["python3", "server.py"]
+deploymentTarget = "autoscale"
+
+[nix]
+channel = "stable-23.11"
+
+[interpreter]
+command = ["python3", "server.py"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80

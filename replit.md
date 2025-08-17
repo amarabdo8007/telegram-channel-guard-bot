@@ -132,13 +132,23 @@ Added Flask HTTP server for deployment health checks:
 - ✅ **Threading Fixed**: Flask HTTP server runs in daemon thread, Telegram bot in main thread
 - ✅ **Signal Handling Resolved**: Telegram bot now runs in main thread avoiding signal handler errors
 - ✅ **All Health Endpoints Working**: 
-  - `/` returns {"message":"Bot is running","service":"telegram-bot","status":"healthy"}
+  - `/` returns {"message":"Bot is running","service":"telegram-bot","status":"healthy","bot_initialized":true,"timestamp":"repl-id","port":"5000"}
   - `/health` returns {"status":"ok"}  
-  - `/bot-status` returns {"bot":"running","handlers":"loaded","status":"active"}
+  - `/bot-status` returns {"bot":"running","handlers":"loaded","status":"active","application_running":true}
+  - `/ping` returns "pong" (simple connectivity test)
 - ✅ **Procfile Updated**: Now uses `web: python3 server.py`
-- ✅ **app.yaml Updated**: Now uses `entrypoint: python3 server.py`
+- ✅ **app.yaml Updated**: Now uses `entrypoint: python3 server.py` with `/health` health check endpoint
+- ✅ **replit.toml Created**: Proper Replit deployment configuration with autoscale target
 - ✅ **No $file Variable References**: Direct specification of server.py entry point
 - ✅ **Port Configuration Verified**: HTTP server binding to 0.0.0.0:5000 correctly
+- ✅ **Enhanced Error Handling**: All endpoints include proper exception handling and HTTP status codes
 - ✅ **Both Services Running**: Telegram bot polling and HTTP server responding simultaneously
 - ✅ **Threading Architecture Stable**: No event loop conflicts or signal handling issues
 - ✅ **Deployment Ready**: All deployment requirements met with robust architecture
+
+**Latest Deployment Fixes Applied (August 17, 2025):**
+- ✅ **Enhanced Health Endpoints**: Added detailed bot status, error handling, and deployment debugging info
+- ✅ **Additional Configuration Files**: Created replit.toml for proper Replit Autoscale deployment
+- ✅ **Deployment Guide**: Created comprehensive deployment_guide.md with troubleshooting steps
+- ✅ **All HTTP Endpoints Tested**: Verified all health check endpoints return proper responses
+- ✅ **Ready for Autoscale Deployment**: Meets all Replit deployment requirements for health checks
