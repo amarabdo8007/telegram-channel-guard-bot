@@ -182,23 +182,30 @@ def setup_telegram_bot():
             raise
 
 def start_flask_server():
-    """Start Flask server in background thread"""
+    """Start Flask server in main thread"""
     port = int(os.environ.get("PORT", 5000))
     print(f"Starting HTTP server on 0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False, threaded=True)
 
 def main():
-    """Main function - starts Flask server in background and Telegram bot as main process"""
-    # Start Flask server in background thread
-    flask_thread = threading.Thread(target=start_flask_server, daemon=True)
-    flask_thread.start()
+    """Main function - starts Telegram bot in background and Flask server as main process"""
+    # Start Telegram bot in background thread
+    bot_thread = threading.Thread(target=setup_telegram_bot, daemon=False)
+    bot_thread.start()
     
-    # Give Flask server a moment to start
+    # Give bot a moment to start
     import time
-    time.sleep(2)
+    time.sleep(3)
     
-    # Setup and run Telegram bot in main thread
-    setup_telegram_bot()
+    # Start Flask server in main thread - this ensures port is properly bound
+    try:
+        start_flask_server()
+    except KeyboardInterrupt:
+        print("Server stopped by user")
+    except Exception as e:
+        print(f"Server error: {e}")
+    finally:
+        remove_lock_file()
 
 if __name__ == "__main__":
     main()

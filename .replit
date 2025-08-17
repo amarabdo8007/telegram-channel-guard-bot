@@ -21,13 +21,13 @@ args = "TelegramBot"
 name = "TelegramBot"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python3 server.py"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 working_server.py"
+waitForPort = 5000
 
 [deployment]
 deploymentTarget = "cloudrun"
@@ -35,4 +35,3 @@ run = ["sh", "-c", "python main.py"]
 
 [[ports]]
 localPort = 5000
-externalPort = 80

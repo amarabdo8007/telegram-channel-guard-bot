@@ -48,11 +48,6 @@ def main():
         logger.error("TELEGRAM_BOT_TOKEN environment variable is required")
         return
     
-    # Start Flask server in a separate thread for health checks
-    flask_thread = threading.Thread(target=run_flask_server, daemon=True)
-    flask_thread.start()
-    logger.info("Health check server started on port %s", os.environ.get("PORT", 5000))
-    
     # Create application
     application = Application.builder().token(bot_token).build()
     
@@ -83,8 +78,20 @@ def main():
     
     logger.info("Telegram bot is starting...")
     
-    # Start the bot
-    application.run_polling(allowed_updates=["message", "chat_member", "callback_query"])
+    # Start bot in background thread to keep main thread for Flask
+    def run_bot():
+        application.run_polling(allowed_updates=["message", "chat_member", "callback_query"])
+    
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
+    
+    # Small delay for bot to initialize
+    import time
+    time.sleep(3)
+    logger.info("Bot started in background, starting HTTP server...")
+    
+    # Start Flask server in main thread (required for workflow port detection)
+    run_flask_server()
 
 if __name__ == "__main__":
     main()
