@@ -122,3 +122,13 @@
 {"timestamp": "2025-08-17T00:03:21.879284", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
 {"timestamp": "2025-08-17T00:05:24.233307", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
 {"timestamp": "2025-08-17T00:07:39.081429", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-17T00:11:09.048482", "action": "start_command", "user_id": 6195301672, "username": "G_COIN_help_Support", "chat_id": 6195301672, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-17T00:11:15.174976", "action": "channel_added_to_protection", "user_id": null, "username": null, "chat_id": -1002564652881, "admin_id": 6195301672, "admin_username": "G_COIN_help_Support", "reason": null}
+{"timestamp": "2025-08-17T00:11:34.806899", "action": "admin_added_to_monitor", "user_id": 6854864464, "username": null, "chat_id": -1002564652881, "admin_id": 6195301672, "admin_username": "G_COIN_help_Support", "reason": null}
+{"timestamp": "2025-08-17T00:12:08.312885", "action": "member_banned", "user_id": 7660644224, "username": null, "chat_id": -1002564652881, "admin_id": 6854864464, "admin_username": "BOKAYLO", "reason": null}
+{"timestamp": "2025-08-17T00:12:08.924794", "action": "admin_banned_for_abuse", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": -1002564652881, "admin_id": null, "admin_username": null, "reason": "Banned regular member 7660644224"}
+{"timestamp": "2025-08-17T00:12:09.107623", "action": "member_banned", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": -1002564652881, "admin_id": 8092698324, "admin_username": "V_X12X_BOT", "reason": null}
+{"timestamp": "2025-08-17T00:18:28.940049", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-17T00:22:34.343387", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-17T00:36:50.398130", "action": "start_command", "user_id": 5480487713, "username": "Iol_pop", "chat_id": 5480487713, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-17T00:36:51.434312", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
