@@ -54,8 +54,16 @@ All endpoints return proper HTTP status codes and JSON responses:
 ## Deployment Steps
 
 1. **Environment Variables**: Ensure `TELEGRAM_BOT_TOKEN` is set in Replit Secrets
-2. **Deploy**: Click the Deploy button in Replit
-3. **Verify**: Check health endpoints after deployment
+2. **Run Command**: When deploying, set the run command to: `python3 server.py`
+3. **Deploy**: Click the Deploy button in Replit  
+4. **Verify**: Check health endpoints after deployment
+
+## Manual Run Command Configuration
+
+If the deployment shows "Run command cannot be empty", set the run command in the deployment UI to one of:
+- `python3 server.py` (recommended)
+- `python3 start.py` (alternative)
+- `python3 main.py` (legacy option)
 
 ## Troubleshooting
 
