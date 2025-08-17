@@ -121,6 +121,16 @@ Added Flask HTTP server for deployment health checks:
 
 **Deployment Files Updated:**
 - `Procfile`: Updated to `web: python3 main.py` for platform deployment
-- `app.yaml`: Cloud Run deployment configuration with health checks and proper entrypoint
+- `app.yaml`: Cloud Run deployment configuration with health checks and proper entrypoint (Updated August 17, 2025)
+  - ✅ Changed entrypoint from `python3 main.py` to `python3 run.py` to avoid $file variable issues
+  - ✅ Updated health check path from `/health` to `/` for better compatibility
 - `deployment_status.md`: Comprehensive status report created
-- `run.py`: Alternative entry point created for deployment flexibility
+- `run.py`: Alternative entry point created for deployment flexibility - now primary entrypoint
+
+**Latest Deployment Fixes Applied (August 17, 2025 - Evening):**
+- ✅ **Entrypoint Fix**: Updated app.yaml to use `python3 run.py` instead of `python3 main.py` to avoid $file variable reference issues
+- ✅ **Health Check Path Fix**: Changed health check path from `/health` to `/` since root endpoint is already responding successfully
+- ✅ **Entry Point Specification**: run.py now serves as explicit main file entry point for deployment
+- ✅ **HTTP Server Confirmed**: Flask server already running and responding to health checks on port 5000
+- ✅ **Dependencies Verified**: Flask already properly installed in pyproject.toml
+- ✅ **Ready for Re-deployment**: All suggested fixes from deployment error have been applied
