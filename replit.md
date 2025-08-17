@@ -152,3 +152,16 @@ Added Flask HTTP server for deployment health checks:
 - ✅ **Deployment Guide**: Created comprehensive deployment_guide.md with troubleshooting steps
 - ✅ **All HTTP Endpoints Tested**: Verified all health check endpoints return proper responses
 - ✅ **Ready for Autoscale Deployment**: Meets all Replit deployment requirements for health checks
+
+**Enhanced Admin Management Features (August 17, 2025):**
+- ✅ **Improved Error Messages**: Enhanced promotion failure messages with detailed troubleshooting steps
+- ✅ **Bot Permission Detection**: Added proactive checking of bot's promotion permissions before attempting user promotion
+- ✅ **Clear User Guidance**: Added step-by-step instructions for granting bot required permissions
+- ✅ **Multiple Error Scenarios**: Comprehensive handling for USER_NOT_PARTICIPANT, USER_ID_INVALID, and Right_forbidden errors
+- ✅ **Alternative Solutions**: Clear guidance on manual promotion as fallback when bot lacks permissions
+- ✅ **Enhanced Status Messages**: Detailed status reporting with specific action items for users
+
+**Bot Permission Requirements:**
+- **For Automatic User Promotion**: Bot needs "Add new administrators" permission in channel settings
+- **For Monitoring Only**: Bot needs basic admin status to detect member changes
+- **Fallback Method**: Manual user promotion works even without bot promotion permissions

@@ -790,6 +790,13 @@ class BotHandler:
             channel_info = await context.bot.get_chat(channel_id)
             channel_name = channel_info.title or f"Channel {channel_id}"
             
+            # Check bot's promotion permissions first
+            try:
+                bot_info = await context.bot.get_chat_member(channel_id, context.bot.id)
+                bot_can_promote = hasattr(bot_info, 'can_promote_members') and bot_info.can_promote_members
+            except:
+                bot_can_promote = False
+            
             # Check if user is channel owner/creator to allow adding any user
             user_id = update.effective_user.id if update.effective_user else None
             if user_id:
@@ -842,7 +849,12 @@ class BotHandler:
                     status_message += "تأكد من:\n"
                     status_message += "• أن المعرف صحيح\n"
                     status_message += "• أن الشخص مشرف فعلي في هذه القناة\n"
-                    status_message += "• أن البوت يمكنه رؤية قائمة المشرفين"
+                    status_message += "• أن البوت يمكنه رؤية قائمة المشرفين\n\n"
+                    
+                    # Add bot permission status
+                    if not bot_can_promote:
+                        status_message += "🤖 ملاحظة إضافية: البوت لا يملك صلاحية ترقية الأعضاء\n"
+                        status_message += "💡 لتفعيل الترقية التلقائية: إعدادات القناة → المشرفين → البوت → فعل 'إضافة مشرفين جدد'"
                     
                     keyboard = [
                         [InlineKeyboardButton("📋 عرض المشرفين الحاليين", callback_data=f"show_channel_admins_{channel_id}")],
@@ -872,34 +884,58 @@ class BotHandler:
                     promotion_result = ""
                     if status not in ['creator', 'administrator']:
                         try:
-                            # Promote user to administrator
-                            await context.bot.promote_chat_member(
-                                chat_id=channel_id,
-                                user_id=admin_id,
-                                can_delete_messages=True,
-                                can_restrict_members=True,
-                                can_pin_messages=True,
-                                can_promote_members=False
-                            )
-                            promotion_result = "\n🎉 تم ترقيته لمشرف في القناة بنجاح!"
-                            status_note = "✅ تم ترقيته لمشرف فعال"
+                            # Check bot's own permissions first
+                            bot_info = await context.bot.get_chat_member(channel_id, context.bot.id)
+                            if not hasattr(bot_info, 'can_promote_members') or not bot_info.can_promote_members:
+                                promotion_result = f"\n❌ البوت لا يملك صلاحية ترقية الأعضاء!"
+                                promotion_result += f"\n🔧 المطلوب: تفعيل صلاحية 'إضافة مشرفين جدد' للبوت"
+                                promotion_result += f"\n\n📋 الخطوات:"
+                                promotion_result += f"\n1️⃣ إعدادات القناة → المشرفين"
+                                promotion_result += f"\n2️⃣ ابحث عن البوت واضغط عليه"
+                                promotion_result += f"\n3️⃣ فعل 'إضافة مشرفين جدد'"
+                                promotion_result += f"\n\n⚡ بديل: رقي المستخدم يدوياً والبوت سيراقبه"
+                                status_note = "⚠️ البوت يحتاج صلاحيات إضافية"
+                            else:
+                                # Promote user to administrator
+                                await context.bot.promote_chat_member(
+                                    chat_id=channel_id,
+                                    user_id=admin_id,
+                                    can_delete_messages=True,
+                                    can_restrict_members=True,
+                                    can_pin_messages=True,
+                                    can_promote_members=False
+                                )
+                                promotion_result = "\n🎉 تم ترقيته لمشرف في القناة بنجاح!"
+                                status_note = "✅ تم ترقيته لمشرف فعال"
                         except Exception as e:
                             error_msg = str(e)
                             if "Right_forbidden" in error_msg or "CHAT_ADMIN_REQUIRED" in error_msg:
-                                promotion_result = f"\n⚠️ فشل في ترقيته لمشرف: البوت لا يملك صلاحية ترقية الأعضاء"
-                                promotion_result += "\n💡 يجب على مالك القناة ترقية البوت لمشرف مع صلاحية 'إضافة مشرفين جدد'"
-                                promotion_result += "\n📋 البوت سيراقب المستخدم فقط إذا تم ترقيته يدوياً لاحقاً"
+                                promotion_result = f"\n❌ فشل في ترقيته لمشرف تلقائياً!"
+                                promotion_result += f"\n🔧 المشكلة: البوت لا يملك صلاحية ترقية الأعضاء"
+                                promotion_result += f"\n\n📋 الحل المطلوب:"
+                                promotion_result += f"\n1️⃣ اذهب لإعدادات القناة"
+                                promotion_result += f"\n2️⃣ ادخل على 'المشرفين'"
+                                promotion_result += f"\n3️⃣ ابحث عن البوت واضغط عليه"
+                                promotion_result += f"\n4️⃣ فعل صلاحية 'إضافة مشرفين جدد'"
+                                promotion_result += f"\n\n⚡ بديل سريع: رقي المستخدم يدوياً لمشرف، والبوت سيراقبه فوراً"
+                                status_note = "⚠️ يحتاج ترقية يدوية"
                             elif "USER_NOT_PARTICIPANT" in error_msg:
-                                promotion_result = f"\n⚠️ فشل في ترقيته لمشرف: المستخدم ليس عضو في القناة"
-                                promotion_result += "\n💡 يجب على المستخدم الانضمام للقناة أولاً"
+                                promotion_result = f"\n❌ فشل في الترقية: المستخدم ليس عضو في القناة!"
+                                promotion_result += f"\n💡 الحل: يجب على المستخدم الانضمام للقناة أولاً"
+                                status_note = "⚠️ المستخدم غير منضم للقناة"
+                            elif "USER_ID_INVALID" in error_msg:
+                                promotion_result = f"\n❌ فشل في الترقية: الـ ID المُدخل غير صحيح!"
+                                promotion_result += f"\n💡 الحل: تأكد من الـ ID باستخدام @GetChatID_IL_BOT"
+                                status_note = "❌ ID غير صحيح"
                             else:
-                                promotion_result = f"\n⚠️ فشل في ترقيته لمشرف: {error_msg}"
-                                promotion_result += "\n💡 تحقق من صلاحيات البوت في القناة"
+                                promotion_result = f"\n❌ فشل في الترقية: {error_msg}"
+                                promotion_result += f"\n💡 تحقق من صلاحيات البوت في القناة"
+                                status_note = "❌ خطأ في الترقية"
                     
                     # Create success message
                     success_message = f"✅ تم إضافة {user_name} (ID: {admin_id}) لقائمة المراقبة!\n\n"
                     success_message += f"📍 القناة: {channel_name}\n"
-                    success_message += f"📋 {status_note}{promotion_result}\n\n"
+                    success_message += f"📋 الحالة: {status_note}{promotion_result}\n\n"
                     
                     # Show which channels this admin is now monitored in
                     protected_channels = self.config["channel_settings"]["protected_channels"]
