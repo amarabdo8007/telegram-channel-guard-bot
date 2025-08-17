@@ -3,8 +3,12 @@ runtime: python311
 env_variables:
   PORT: 5000
 
-entrypoint: python main.py
+entrypoint: python3 main.py
 
 automatic_scaling:
   min_instances: 1
   max_instances: 10
+
+health_check:
+  path: /health
+  port: 5000
