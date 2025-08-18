@@ -35,10 +35,15 @@ def bot_status():
     })
 
 def setup_telegram_bot():
-    """Setup telegram bot after HTTP server is running"""
+    """Setup telegram bot with proper async handling"""
     try:
+        import asyncio
         from telegram.ext import Application, CommandHandler, ChatMemberHandler, CallbackQueryHandler, MessageHandler, filters
         from bot_handler import BotHandler
+        
+        # Create new event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         
         token = os.getenv("TELEGRAM_BOT_TOKEN")
         if not token:
@@ -67,7 +72,7 @@ def setup_telegram_bot():
         
         logger.info("Starting Telegram bot polling...")
         
-        # Start bot polling in a simple way
+        # Start bot polling
         application.run_polling(
             allowed_updates=["message", "chat_member", "callback_query"],
             drop_pending_updates=True
@@ -75,23 +80,22 @@ def setup_telegram_bot():
         
     except Exception as e:
         logger.error(f"Bot setup error: {e}")
-
-# Add bot startup to Flask's before_first_request equivalent
-@app.before_request
-def setup_bot():
-    """Setup bot on first request"""
-    if not hasattr(setup_bot, 'done'):
-        setup_bot.done = True
-        import threading
-        bot_thread = threading.Thread(target=setup_telegram_bot, daemon=True)
-        bot_thread.start()
+    finally:
+        if 'loop' in locals():
+            loop.close()
 
 def main():
     """Main function"""
     port = int(os.environ.get("PORT", 5000))
     logger.info(f"Starting HTTP server on 0.0.0.0:{port}")
     
-    # Start Flask immediately - this ensures port binding for workflow
+    # Start bot immediately in background thread
+    import threading
+    bot_thread = threading.Thread(target=setup_telegram_bot, daemon=True)
+    bot_thread.start()
+    logger.info("Bot thread started")
+    
+    # Start Flask server - this ensures port binding for workflow
     app.run(
         host="0.0.0.0",
         port=port,
