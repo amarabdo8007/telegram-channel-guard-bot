@@ -6,28 +6,6 @@ expertMode = true
 channel = "stable-25_05"
 
 [workflows]
-runButton = "1"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "TelegramBot"
-
-[[workflows.workflow]]
-name = "TelegramBot"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python3 working_server.py"
-waitForPort = 5000
 
 [deployment]
 deploymentTarget = "cloudrun"

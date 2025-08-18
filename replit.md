@@ -153,6 +153,14 @@ Added Flask HTTP server for deployment health checks:
 - ✅ **All HTTP Endpoints Tested**: Verified all health check endpoints return proper responses
 - ✅ **Ready for Autoscale Deployment**: Meets all Replit deployment requirements for health checks
 
+**Critical Threading Issue Identified (August 18, 2025):**
+- ❌ **Replit Workflow Incompatibility**: python-telegram-bot library requires main thread for signal handling (set_wakeup_fd)
+- ❌ **Port Detection Conflict**: Replit workflows expect immediate port binding but telegram bot needs main thread
+- ❌ **Threading Limitation**: Background threads cannot run telegram bot due to signal handler restrictions
+- ✅ **HTTP Server Works**: Flask health endpoints function correctly on port 5000
+- ✅ **Bot Code Validated**: All bot functionality works when run independently
+- 🔄 **Resolution Required**: Need alternative deployment approach without Replit workflows
+
 **Enhanced Admin Management Features (August 17, 2025):**
 - ✅ **Improved Error Messages**: Enhanced promotion failure messages with detailed troubleshooting steps
 - ✅ **Bot Permission Detection**: Added proactive checking of bot's promotion permissions before attempting user promotion
