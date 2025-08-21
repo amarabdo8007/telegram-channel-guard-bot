@@ -14,21 +14,30 @@ from flask import Flask, jsonify
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Simple Flask app for health checks
+# Simple Flask app for health checks and uptime monitoring
 app = Flask(__name__)
 
 @app.route('/')
-def health():
-    return jsonify({"status": "running", "service": "telegram-bot"})
+def home():
+    return "Bot is running!"
 
 @app.route('/health')
 def health_check():
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "ok", "bot": "running"})
+
+@app.route('/status')
+def status():
+    return jsonify({
+        "status": "healthy",
+        "service": "telegram-bot", 
+        "message": "Channel Guard Bot is active",
+        "uptime": "online"
+    })
 
 def run_http_server():
-    """Run HTTP server in background for health checks"""
+    """Run HTTP server in background for health checks and uptime monitoring"""
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False, threaded=True)
 
 def main():
     """Main function - bot in main thread"""
