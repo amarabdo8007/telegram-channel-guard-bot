@@ -22,20 +22,34 @@
 6. لا تختر Add README (موجود بالفعل)
 7. اضغط "Create repository"
 
-### 3. من Terminal (للمطورين):
+### 3. حل مشكلة Remote Origin الموجود:
+
+إذا واجهت خطأ "UNKNOWN error adding origin"، اتبع هذه الخطوات:
+
 ```bash
-# إضافة الملفات
+# 1. شوف الـ remotes الحالية
+git remote -v
+
+# 2. امسح الـ remote القديم (إن وُجد)
+git remote remove origin
+
+# 3. أضف الـ repo الجديد
+git remote add origin https://github.com/amarabdo8007/telegram-channel-guard-bot.git
+
+# 4. أضف الملفات واعمل push
 git add .
-
-# إنشاء commit
-git commit -m "Initial commit: Telegram Channel Guard Bot"
-
-# ربط المشروع بـ GitHub
-git remote add origin https://github.com/[username]/[repository-name].git
-
-# رفع الكود
+git commit -m "تحديث أولي: بوت حارس القناة"
 git push -u origin main
 ```
+
+### إذا كان Git محمي في Replit:
+
+استخدم واجهة Replit:
+1. اضغط على أيقونة الثلاث خطوط (☰) في الـ sidebar
+2. اختر "Version Control" أو "Git"
+3. اضغط "Connect to GitHub"
+4. اختر repository موجود أو أنشئ جديد
+5. املأ البيانات: `telegram-channel-guard-bot`
 
 ## بعد الربط:
 - ✅ المشروع سيكون متاحاً على GitHub
