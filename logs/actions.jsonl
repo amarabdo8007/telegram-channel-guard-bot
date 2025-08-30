@@ -206,3 +206,8 @@
 {"timestamp": "2025-08-21T00:24:12.770162", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
 {"timestamp": "2025-08-21T00:29:20.188380", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
 {"timestamp": "2025-08-28T01:04:09.224375", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-28T01:10:32.468985", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-28T01:11:06.985865", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-28T15:48:15.375943", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
+{"timestamp": "2025-08-28T15:48:47.271112", "action": "admin_added_to_monitor", "user_id": 7717740661, "username": null, "chat_id": -1002128165594, "admin_id": 6854864464, "admin_username": "BOKAYLO", "reason": null}
+{"timestamp": "2025-08-30T00:53:34.708742", "action": "start_command", "user_id": 6854864464, "username": "BOKAYLO", "chat_id": 6854864464, "admin_id": null, "admin_username": null, "reason": null}
