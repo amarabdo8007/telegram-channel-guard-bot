@@ -8,7 +8,13 @@
 2. **ربط GitHub**: اختر المشروع من GitHub
 3. **إعداد المتغيرات**:
    - `TELEGRAM_BOT_TOKEN` = توكن البوت
-4. **التشغيل**: Railway سيكتشف `requirements.txt` تلقائياً
+4. **إعداد Start Command** (مهم جداً):
+   - اذهب لـ Settings → Deploy → Start Command
+   - غير إلى: `python3 run_bot.py`
+5. **تغيير نوع الخدمة** (اختياري):
+   - غير اسم الخدمة من "web" إلى "bot" أو "worker"
+   - يمنع Railway من توقع HTTP port
+6. **Deploy**: اضغط Redeploy أو ادفع تعديل للكود
 
 ### Heroku ☁️
 

@@ -53,7 +53,9 @@
 ### Railway
 - [x] `requirements.txt` للتثبيت التلقائي
 - [x] `Procfile` مع worker command
+- [x] Start Command: `python3 run_bot.py`
 - [x] متغير TELEGRAM_BOT_TOKEN مطلوب
+- [x] تغيير نوع الخدمة من web إلى worker
 
 ### Heroku
 - [x] `Procfile` مُعد بشكل صحيح
