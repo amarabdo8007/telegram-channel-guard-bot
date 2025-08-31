@@ -56,3 +56,6 @@ send_test_message.py
 # Backup files
 *_backup.*
 *_old.*
+
+# Keep requirements.txt for deployment
+!requirements.txt

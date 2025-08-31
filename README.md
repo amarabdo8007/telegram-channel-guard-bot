@@ -30,7 +30,7 @@
 
 ```bash
 # تثبيت المكتبات المطلوبة
-pip install -r requirements_github.txt
+pip install -r requirements.txt
 ```
 
 ### 2. إعداد متغيرات البيئة
